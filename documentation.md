@@ -2,6 +2,8 @@
 
 This document contains every detail about the functionality, implementation and use cases of every function defined in the API developed by ThanOS.
 
+<!-- markdownlint-disable MD024 -->
+
 ## cr_open
 
 ```c
