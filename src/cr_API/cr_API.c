@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../constants/constants.h"
+#include "../disk_manager/disk_manager.h"
 #include "cr_API.h"
 
 
@@ -8,6 +9,9 @@
 struct crfile {
 
 };
+
+
+Disk *mounted_disk = NULL;
 
 
 // File management functions
@@ -58,7 +62,13 @@ int cr_load(char *orig)
 // General API functions
 void cr_mount(char *diskname)
 {
+    mounted_disk = open_disk(diskname);
+}
 
+
+void cr_unmount()
+{
+    free(mounted_disk);
 }
 
 

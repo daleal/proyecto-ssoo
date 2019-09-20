@@ -14,6 +14,7 @@ int cr_load(char *orig);
 
 // General API functions
 void cr_mount(char *diskname);
+void cr_unmount();
 void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
