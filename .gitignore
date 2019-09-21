@@ -1,4 +1,15 @@
+# Text editor stuff
 .vscode
+
+# Compiled stuff
 obj
 crfs
+
+# Binaries
 *.bin
+
+# Segmentation fault generated stuff
+vgcore.*
+
+# Debug files
+*.txt
