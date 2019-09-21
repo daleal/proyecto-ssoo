@@ -74,7 +74,31 @@ void cr_unmount()
 
 void cr_bitmap(unsigned block, bool hex)
 {
+    if (mounted_disk == NULL) {
+        printf("No disk is mounted.\n");
+        return;
+    } else {
 
+    }
+    if (block == 0) {
+        // 131072 bitmap bytes in total
+        for (int i = 0; i < 131072; i++) {
+            if (!!hex) {
+                fprintf(stderr, "%u\n",  mounted_disk->bitmap[i]);
+            } else {
+                fprintf(stderr, "FUNCTION STILL MISSING\n");
+            }
+            fprintf(stderr, "SHOW HOW MANY USED BLOCKS EXIST IN THE DISK\n");
+            fprintf(stderr, "SHOW HOW MANY FREE BLOCKS EXIST IN THE DISK\n");
+        }
+    } else if (block >= 1 && block <= 129) {
+        --block;
+        if (!!hex) {
+            fprintf(stderr, "%u\n", mounted_disk->bitmap[block]);
+        } else {
+            fprintf(stderr, "FUNCTION STILL MISSING\n");
+        }
+    }
 }
 
 

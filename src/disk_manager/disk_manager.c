@@ -3,11 +3,21 @@
 #include "disk_manager.h"
 
 
-// Disk struct
-struct disk {
-    DirectoryBlock *index;
-    unsigned char bitmap[131072];
-    // 1024 chars * 128 bitmap blocks = 131 072 chars of bitmap
+// Directory Entry struct
+struct directory_entry {
+    unsigned char status;
+    // 1:  invalid
+    // 2:  valid, corresponds to a directory
+    // 4:  valid, corresponds to a file
+    // 8:  valid, the same directory
+    // 16: invalid, father directory
+    // 32: next (same) directory
+
+    char name[27];
+    // Empty spaces must be 0
+
+    unsigned int file_pointer;
+    // From 0 to 1048575
 };
 
 
@@ -31,24 +41,6 @@ struct index_block {
 // Vainilla Block struct
 struct block {
     unsigned char data[1024];
-};
-
-
-// Directory Entry struct
-struct directory_entry {
-    unsigned char status;
-    // 1:  invalid
-    // 2:  valid, corresponds to a directory
-    // 4:  valid, corresponds to a file
-    // 8:  valid, the same directory
-    // 16: invalid, father directory
-    // 32: next (same) directory
-
-    char name[27];
-    // Empty spaces must be 0
-
-    unsigned int file_pointer;
-    // From 0 to 1048575
 };
 
 

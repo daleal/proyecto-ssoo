@@ -7,6 +7,7 @@
 int main(int argc, char **argv)
 {
     cr_mount(argv[1]);
+    cr_bitmap(17, true);
     crFILE *file = cr_open("/memes/file.txt", "r");
     cr_close(file);
     cr_unmount();
