@@ -84,7 +84,7 @@ void cr_bitmap(unsigned block, bool hex)
         // 131072 bitmap bytes in total
         for (int i = 0; i < 131072; i++) {
             if (!!hex) {
-                fprintf(stderr, "%u\n",  mounted_disk->bitmap[i]);
+                fprintf(stderr, "0x%X\n",  mounted_disk->bitmap[i]);
             } else {
                 fprintf(stderr, "FUNCTION STILL MISSING\n");
             }
@@ -94,7 +94,7 @@ void cr_bitmap(unsigned block, bool hex)
     } else if (block >= 1 && block <= 129) {
         --block;
         if (!!hex) {
-            fprintf(stderr, "%u\n", mounted_disk->bitmap[block]);
+            fprintf(stderr, "0x%X\n", mounted_disk->bitmap[block]);
         } else {
             fprintf(stderr, "FUNCTION STILL MISSING\n");
         }
