@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "disk_manager.h"
 
 
@@ -67,4 +68,48 @@ Disk *open_disk(char *diskname)
     fclose(raw);
 
     return disk;
+}
+
+
+int bit_from_bitmap(Disk *disk, int position)
+{
+    int chunk = position / 8;
+    int offset = 7 - (position % 8);
+    return bit_from_byte(disk->bitmap[chunk], offset);
+}
+
+
+int bit_from_byte(unsigned char byte, int position)
+{
+    int bit;
+    bit = (byte % (int) (pow(2, position + 1))) / (int) pow(2, position);
+    return bit;
+}
+
+
+int used_blocks(Disk *disk)
+{
+    int used = 0;
+    for (int i = 0; i < BITMAP_BYTES; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (bit_from_bitmap(disk, (i * 8) + j)) {
+                ++used;
+            }
+        }
+    }
+    return used;
+}
+
+
+int free_blocks(Disk *disk)
+{
+    int free = 0;
+    for (int i = 0; i < BITMAP_BYTES; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (!bit_from_bitmap(disk, (i * 8) + j)) {
+                ++free;
+            }
+        }
+    }
+    return free;
 }

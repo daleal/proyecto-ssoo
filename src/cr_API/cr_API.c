@@ -77,27 +77,41 @@ void cr_bitmap(unsigned block, bool hex)
     if (mounted_disk == NULL) {
         printf("No disk is mounted.\n");
         return;
-    } else {
-
     }
     if (block == 0) {
-        // 131072 bitmap bytes in total
-        for (int i = 0; i < 131072; i++) {
+        for (int i = 0; i < BITMAP_BYTES; i++) {
             if (!!hex) {
                 fprintf(stderr, "0x%X\n",  mounted_disk->bitmap[i]);
             } else {
-                fprintf(stderr, "FUNCTION STILL MISSING\n");
+                for (int j = 0; j < 8; j++) {
+                    fprintf(stderr, "%i ", bit_from_bitmap(mounted_disk, (i * 8) + j));
+                }
+                fprintf(stderr, "\n");
             }
-            fprintf(stderr, "SHOW HOW MANY USED BLOCKS EXIST IN THE DISK\n");
-            fprintf(stderr, "SHOW HOW MANY FREE BLOCKS EXIST IN THE DISK\n");
         }
+        fprintf(stderr, "Used blocks: %i\n", used_blocks(mounted_disk));
+        fprintf(stderr, "Free blocks: %i\n", free_blocks(mounted_disk));
     } else if (block >= 1 && block <= 129) {
         --block;
-        if (!!hex) {
-            fprintf(stderr, "0x%X\n", mounted_disk->bitmap[block]);
-        } else {
-            fprintf(stderr, "FUNCTION STILL MISSING\n");
+        for (int offset = 0; offset < BLOCK_SIZE; offset++) {
+            if (!!hex) {
+                fprintf(stderr, "0x%X\n", mounted_disk->bitmap[(block * BLOCK_SIZE) + offset]);
+            } else {
+                for (int j = 0; j < 8; j++) {
+                    fprintf(
+                        stderr, "%i ",
+                        bit_from_bitmap(mounted_disk, (((block * BLOCK_SIZE) + offset) * 8) + j)
+                    );
+                }
+                fprintf(stderr, "\n");
+            }
         }
+    } else {
+        fprintf(
+            stderr,
+            "Invalid bitmap block %i. Please try again with a number between 1 and 129.\n",
+            block
+        );
     }
 }
 
