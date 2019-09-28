@@ -48,20 +48,22 @@ struct block {
 Disk *open_disk(char *diskname)
 {
     FILE *raw;
-    Disk *disk = malloc(sizeof(Disk));
-    unsigned char index_block[BLOCK_SIZE];
-    unsigned char block_buffer[BLOCK_SIZE];
-    raw = fopen(diskname,"rb");
+    raw = fopen(diskname, "rb");
     if (raw == NULL) {
-        free(disk);
         return NULL;
     }
 
-    // Get index block
-    fread(index_block, sizeof(unsigned char), sizeof(index_block), raw);
+    Disk *disk = malloc(sizeof(Disk));
+    Block *index_block = malloc(sizeof(Block));
+
+    // Get raw index block
+    fread(index_block->data, sizeof(unsigned char), BLOCK_SIZE, raw);
 
     // Get bitmap blocks
-    fread(disk->bitmap, sizeof(unsigned char), sizeof(disk->bitmap), raw);
+    fread(disk->bitmap, sizeof(unsigned char), BITMAP_BYTES, raw);
+
+    // Get index block
+    disk->index = get_index_block(index_block);
 
     for (int i = 0; i < DISK_BLOCKS; i++) {
         disk->blocks[i] = malloc(sizeof(Block));
@@ -69,6 +71,7 @@ Disk *open_disk(char *diskname)
     }
 
     fclose(raw);
+    free(index_block);
 
     return disk;
 }
@@ -82,10 +85,30 @@ int close_disk(Disk *disk)
     for (int i = 0; i < DISK_BLOCKS; i++) {
         free(disk->blocks[i]);
     }
+    free(disk->index);
     free(disk);
     return 1;
 }
 
+
+
+/* BLOCK CONVERSIONS */
+
+IndexBlock *get_index_block(Block *block)
+{
+    IndexBlock *index_block = malloc(sizeof(IndexBlock));
+    unsigned char *buffer = malloc(sizeof(unsigned char) * 4);
+    for (int i = 0; i < 4; i++) {
+        buffer[i] = block->data[i];
+    }
+    int_from_chars(buffer, &index_block->size);
+    free(buffer);
+    return index_block;
+}
+
+
+
+/* BITMAP MANAGEMENT */
 
 int bit_from_bitmap(Disk *disk, int position)
 {
@@ -128,4 +151,22 @@ int free_blocks(Disk *disk)
         }
     }
     return free;
+}
+
+
+
+/* BIT FIDDELING */
+
+void int_from_chars(unsigned char *bytes, unsigned int *integer)
+{
+    *integer = (unsigned int) bytes[3] | ( (int)bytes[2] << 8 ) | ( (int)bytes[1] << 16 ) | ( (int)bytes[0] << 24 );
+}
+
+
+void chars_from_int(unsigned char *bytes, unsigned int *integer)
+{
+    bytes[0] = (*integer >> 24) & 0xFF;
+    bytes[1] = (*integer >> 16) & 0xFF;
+    bytes[2] = (*integer >> 8) & 0xFF;
+    bytes[3] = *integer & 0xFF;
 }
