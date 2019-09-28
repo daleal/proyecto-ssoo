@@ -53,8 +53,8 @@ Disk *open_disk(char *diskname)
     unsigned char block_buffer[1024];
     raw = fopen(diskname,"rb");
     if (raw == NULL) {
-        printf("Unable to find %s disk. Exiting.\n", diskname);
-        exit(1);
+        free(disk);
+        return NULL;
     }
 
     // Get index block

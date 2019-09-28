@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../constants/constants.h"
+#include "../error_handler/error_handler.h"
 #include "../disk_manager/disk_manager.h"
 #include "cr_API.h"
 
@@ -63,6 +64,9 @@ int cr_load(char *orig)
 void cr_mount(char *diskname)
 {
     mounted_disk = open_disk(diskname);
+    if (mounted_disk == NULL) {
+        handle_error("Could not mount disk");
+    }
 }
 
 
@@ -75,7 +79,7 @@ void cr_unmount()
 void cr_bitmap(unsigned block, bool hex)
 {
     if (mounted_disk == NULL) {
-        printf("No disk is mounted.\n");
+        log_error("No disk is mounted.");
         return;
     }
     if (block == 0) {
@@ -107,11 +111,7 @@ void cr_bitmap(unsigned block, bool hex)
             }
         }
     } else {
-        fprintf(
-            stderr,
-            "Invalid bitmap block %i. Please try again with a number between 1 and 129.\n",
-            block
-        );
+        log_error("Invalid bitmap block. Please try again with a number between 1 and 129.");
     }
 }
 

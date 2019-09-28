@@ -16,7 +16,7 @@ crFILE *cr_open(char *path, char *mode);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -36,7 +36,7 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -56,7 +56,7 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -76,7 +76,7 @@ int cr_close(crFILE *file_desc);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -96,7 +96,7 @@ int cr_rm(char *path);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -116,7 +116,7 @@ int cr_unload(char *orig, char *dest);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -136,7 +136,7 @@ int cr_load(char *orig);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -154,11 +154,11 @@ void cr_mount(char *diskname);
 
 ### Description
 
-Function description
+Opens the disk `diskname` and saves a pointer to it in the variable `mounted_disk`.
 
-### Return Value
+### Return Value and Error Handling
 
-Describe return value
+The function returns void. In case that `diskname` does not exist, it logs a message to `stderr` and sets the variable `mounted_disk` to `NULL`.
 
 ### Notes
 
@@ -176,7 +176,7 @@ void cr_bitmap(unsigned block, bool hex);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -196,7 +196,7 @@ int cr_exists(char *path);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -216,7 +216,7 @@ void cr_ls(char *path);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
@@ -236,7 +236,7 @@ int cr_mkdir(char *foldername);
 
 Function description
 
-### Return Value
+### Return Value and Error Handling
 
 Describe return value
 
