@@ -41,7 +41,7 @@ struct index_block {
 
 // Vainilla Block struct
 struct block {
-    unsigned char data[1024];
+    unsigned char data[BLOCK_SIZE];
 };
 
 
@@ -49,8 +49,8 @@ Disk *open_disk(char *diskname)
 {
     FILE *raw;
     Disk *disk = malloc(sizeof(Disk));
-    unsigned char index_block[1024];
-    unsigned char block_buffer[1024];
+    unsigned char index_block[BLOCK_SIZE];
+    unsigned char block_buffer[BLOCK_SIZE];
     raw = fopen(diskname,"rb");
     if (raw == NULL) {
         free(disk);
@@ -63,11 +63,27 @@ Disk *open_disk(char *diskname)
     // Get bitmap blocks
     fread(disk->bitmap, sizeof(unsigned char), sizeof(disk->bitmap), raw);
 
-
+    for (int i = 0; i < DISK_BLOCKS; i++) {
+        disk->blocks[i] = malloc(sizeof(Block));
+        fread(disk->blocks[i]->data, sizeof(unsigned char), BLOCK_SIZE, raw);
+    }
 
     fclose(raw);
 
     return disk;
+}
+
+
+int close_disk(Disk *disk)
+{
+    if (disk == NULL) {
+        return 0;
+    }
+    for (int i = 0; i < DISK_BLOCKS; i++) {
+        free(disk->blocks[i]);
+    }
+    free(disk);
+    return 1;
 }
 
 

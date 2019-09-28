@@ -11,7 +11,7 @@ Integrantes:
 
 ## Decisiones de diseño
 
-Decidimos diseñar el programa.
+Decidimos que el programa cargará el disco completo en la memoria y solamente escribirá en el disco real una vez que se desmonte el disco virtual debido a que esto facilita modelar el disco con `structs`.
 
 ## Supuestos
 

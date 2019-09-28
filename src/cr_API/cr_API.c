@@ -63,16 +63,22 @@ int cr_load(char *orig)
 // General API functions
 void cr_mount(char *diskname)
 {
+   if (mounted_disk != NULL) {
+        handle_error("A disk is already mounted.");
+        return;
+    }
     mounted_disk = open_disk(diskname);
     if (mounted_disk == NULL) {
-        handle_error("Could not mount disk");
+        handle_error("Could not mount disk.");
     }
 }
 
 
 void cr_unmount()
 {
-    free(mounted_disk);
+    if (!close_disk(mounted_disk)) {
+        log_error("No disk is mounted. Could not unmount disk.");
+    }
 }
 
 
