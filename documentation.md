@@ -194,7 +194,7 @@ If `hex` is `true`, the bitmap will show every byte as a hex value. If `hex` is 
 
 ### Return Value and Error Handling
 
-The function returns void. In case that `block` is a value different than the ones specified (`0` to `129`), it logs a message to `stderr`.
+The function returns void. In case that `block` is a value different than the ones specified (`0` to `129`), it logs a message to `stderr`. If no disk is mounted, it logs a message to `stderr`.
 
 ### Notes
 
