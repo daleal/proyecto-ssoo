@@ -24,8 +24,7 @@ struct directory_entry {
 
 // Directory Block struct
 struct directory_block {
-    DirectoryEntry *directories[31];
-    DirectoryEntry *next_block;
+    DirectoryEntry *directories[32];
 };
 
 
@@ -54,16 +53,16 @@ Disk *open_disk(char *diskname)
     }
 
     Disk *disk = malloc(sizeof(Disk));
-    Block *index_block = malloc(sizeof(Block));
+    Block *index = malloc(sizeof(Block));
 
     // Get raw index block
-    fread(index_block->data, sizeof(unsigned char), BLOCK_SIZE, raw);
+    fread(index->data, sizeof(unsigned char), BLOCK_SIZE, raw);
 
     // Get bitmap blocks
     fread(disk->bitmap, sizeof(unsigned char), BITMAP_BYTES, raw);
 
     // Get index block
-    disk->index = get_index_block(index_block);
+    disk->index = get_directory_block(index);
 
     for (int i = 0; i < DISK_BLOCKS; i++) {
         disk->blocks[i] = malloc(sizeof(Block));
@@ -71,7 +70,7 @@ Disk *open_disk(char *diskname)
     }
 
     fclose(raw);
-    free(index_block);
+    free(index);
 
     return disk;
 }
@@ -85,6 +84,9 @@ int close_disk(Disk *disk)
     for (int i = 0; i < DISK_BLOCKS; i++) {
         free(disk->blocks[i]);
     }
+    for (int i = 0; i < 32; i++) {
+        free(disk->index->directories[i]);
+    }
     free(disk->index);
     free(disk);
     return 1;
@@ -93,6 +95,29 @@ int close_disk(Disk *disk)
 
 
 /* BLOCK CONVERSIONS */
+
+DirectoryBlock *get_directory_block(Block *block)
+{
+    DirectoryBlock *directory_block = malloc(sizeof(DirectoryBlock));
+    unsigned char *buffer = malloc(sizeof(unsigned char) * 4);
+    for (int offset = 0; offset < 32; offset++) {
+        directory_block->directories[offset] = malloc(sizeof(DirectoryEntry));
+        // Get entry status
+        directory_block->directories[offset]->status = block->data[32 * offset];
+        // Get entry name
+        for (int i = 0; i < 28; i++) {
+            directory_block->directories[offset]->name[i] = block->data[(32 * offset) + i + 1];
+        }
+        // Get index block pointer
+        for (int i = 0; i < 4; i++) {
+            buffer[i] = block->data[(32 * offset) + 28 + i];
+        }
+        int_from_chars(buffer, &directory_block->directories[offset]->file_pointer);
+    }
+    free(buffer);
+    return directory_block;
+}
+
 
 IndexBlock *get_index_block(Block *block)
 {

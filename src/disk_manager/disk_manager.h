@@ -14,7 +14,7 @@ typedef struct directory_block DirectoryBlock;
 
 // Disk struct
 typedef struct disk {
-    IndexBlock *index;
+    DirectoryBlock *index;
     unsigned char bitmap[BITMAP_BYTES];
     Block *blocks[DISK_BLOCKS];
 } Disk;
@@ -24,6 +24,7 @@ Disk *open_disk(char *diskname);
 int close_disk(Disk *disk);
 
 /* BLOCK CONVERSIONS */
+DirectoryBlock *get_directory_block(Block *block);
 IndexBlock *get_index_block(Block *block);
 
 /* BITMAP MANAGEMENT */
