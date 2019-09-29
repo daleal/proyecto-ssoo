@@ -16,7 +16,7 @@ Disk *mounted_disk = NULL;
 
 
 // File management functions
-crFILE *cr_open(char *path, char *mode)
+crFILE *cr_open(char *path, char mode)
 {
     crFILE *file_desc = malloc(sizeof(crFILE));
     return file_desc;

@@ -4,7 +4,7 @@
 typedef struct crfile crFILE;
 
 // File management functions
-crFILE *cr_open(char *path, char *mode);
+crFILE *cr_open(char *path, char mode);
 int cr_read(crFILE *file_desc, void *buffer, int nbytes);
 int cr_write(crFILE *file_desc, void *buffer, int nbytes);
 int cr_close(crFILE *file_desc);

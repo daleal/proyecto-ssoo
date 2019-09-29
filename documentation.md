@@ -9,7 +9,7 @@ This document contains every detail about the functionality, implementation and 
 ```c
 #include "cr_API.h"
 
-crFILE *cr_open(char *path, char *mode);
+crFILE *cr_open(char *path, char mode);
 ```
 
 ### Description

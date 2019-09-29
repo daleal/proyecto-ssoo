@@ -10,8 +10,8 @@ struct directory_entry {
     // 1:  invalid
     // 2:  valid, corresponds to a directory
     // 4:  valid, corresponds to a file
-    // 8:  valid, the same directory
-    // 16: invalid, father directory
+    // 8:  same directory
+    // 16: father directory
     // 32: next (same) directory
 
     char name[27];
