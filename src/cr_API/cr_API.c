@@ -64,12 +64,12 @@ int cr_load(char *orig)
 void cr_mount(char *diskname)
 {
    if (mounted_disk != NULL) {
-        handle_error("A disk is already mounted.");
+        handle_error("A disk is already mounted");
         return;
     }
     mounted_disk = open_disk(diskname);
     if (mounted_disk == NULL) {
-        handle_error("Could not mount disk.");
+        handle_error("Could not mount disk");
     }
 }
 
@@ -77,7 +77,7 @@ void cr_mount(char *diskname)
 void cr_unmount()
 {
     if (!close_disk(mounted_disk)) {
-        log_error("No disk is mounted. Could not unmount disk.");
+        log_error("No disk is mounted. Could not unmount disk");
     }
 }
 
@@ -85,7 +85,7 @@ void cr_unmount()
 void cr_bitmap(unsigned block, bool hex)
 {
     if (mounted_disk == NULL) {
-        log_error("No disk is mounted.");
+        log_error("No disk is mounted");
         return;
     }
     if (block == 0) {
@@ -117,7 +117,7 @@ void cr_bitmap(unsigned block, bool hex)
             }
         }
     } else {
-        log_error("Invalid bitmap block. Please try again with a number between 1 and 129.");
+        log_error("Invalid bitmap block. Please try again with a number between 1 and 129");
     }
 }
 

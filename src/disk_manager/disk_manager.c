@@ -61,7 +61,7 @@ Disk *open_disk(char *diskname)
     // Get bitmap blocks
     fread(disk->bitmap, sizeof(unsigned char), BITMAP_BYTES, raw);
 
-    // Get index block
+    // Interpret index block
     disk->index = get_directory_block(index);
 
     for (int i = 0; i < DISK_BLOCKS; i++) {
@@ -100,6 +100,7 @@ DirectoryBlock *get_directory_block(Block *block)
 {
     DirectoryBlock *directory_block = malloc(sizeof(DirectoryBlock));
     unsigned char *buffer = malloc(sizeof(unsigned char) * 4);
+    // Get entries
     for (int offset = 0; offset < 32; offset++) {
         directory_block->directories[offset] = malloc(sizeof(DirectoryEntry));
         // Get entry status
