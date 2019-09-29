@@ -154,15 +154,27 @@ void cr_mount(char *diskname);
 
 ### Description
 
-Opens the disk `diskname` and saves a pointer to it in the variable `mounted_disk`.
+Opens the disk `diskname` and saves a pointer to it on the environmental variable `mounted_disk`.
 
 ### Return Value and Error Handling
 
-The function returns void. In case that `diskname` does not exist, it logs a message to `stderr` and sets the variable `mounted_disk` to `NULL`.
+The function returns void. In case that `diskname` does not exist, it logs a message to `stderr` and sets the environmental variable `mounted_disk` to `NULL`.
 
-### Notes
+## cr_unmount
 
-Aditional notes about the function
+```c
+#include "cr_API.h"
+
+void cr_unmount();
+```
+
+### Description
+
+Closes the disk loaded on the environmental variable `mounted_disk` and frees its memory.
+
+### Return Value and Error Handling
+
+The function returns void. In case that `mounted_disk` is set to `NULL`, it logs a message to `stderr`.
 
 ## cr_bitmap
 
@@ -174,15 +186,19 @@ void cr_bitmap(unsigned block, bool hex);
 
 ### Description
 
-Function description
+Shows a representation of the bitmap of `mounted_disk` in `stderr`.
+
+If `block` is `0`, it shows the whole bitmap and then the amount of used blocks and the amount of free blocks left. If `block` is any number between `1` and `129` (both included), it shows the bitmap block in that position.
+
+If `hex` is `true`, the bitmap will show every byte as a hex value. If `hex` is `false`, the bitmap will show every bit on its own.
 
 ### Return Value and Error Handling
 
-Describe return value
+The function returns void. In case that `block` is a value different than the ones specified (`0` to `129`), it logs a message to `stderr`.
 
 ### Notes
 
-Aditional notes about the function
+As the bitmap contains 131072 bytes of information, calling the function with `block` set to `0` will probably overflow the console, so it is advisable to change the `stderr` file to an external file and use it as a debug log.
 
 ## cr_exists
 
