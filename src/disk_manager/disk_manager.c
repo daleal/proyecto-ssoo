@@ -44,6 +44,17 @@ struct block {
 };
 
 
+/*
+ * Opens a file named :diskname and returns a pointer
+ * to a Disk struct containing an interpreted directory
+ * block, an array of bytes representing the bitmap and
+ * an array of pointers to raw blocks to be interpreted
+ * when required.
+ * If the :diskname file does not exist
+ * or fails to be opened, the function returns a pointer
+ * to NULL. Otherwise, the function returns a poitner
+ * to a Disk struct.
+ */
 Disk *open_disk(char *diskname)
 {
     FILE *raw;
@@ -76,6 +87,13 @@ Disk *open_disk(char *diskname)
 }
 
 
+/*
+ * Ideally, this method rewrites the disk file with
+ * the new disk content (YET TO BE DONE) and then
+ * frees the memory of the disk.
+ * If the :disk struct poitner points to NULL, the
+ * method returns 0. Otherwise, it returns 1.
+ */
 int close_disk(Disk *disk)
 {
     if (disk == NULL) {
@@ -96,6 +114,11 @@ int close_disk(Disk *disk)
 
 /* BLOCK CONVERSIONS */
 
+/*
+ * The method recieves a raw Block struct :block,
+ * interprets it as a DirectoryBlock struct and
+ * returns a pointer to it.
+ */
 DirectoryBlock *get_directory_block(Block *block)
 {
     DirectoryBlock *directory_block = malloc(sizeof(DirectoryBlock));
@@ -120,6 +143,11 @@ DirectoryBlock *get_directory_block(Block *block)
 }
 
 
+/*
+ * The method recieves a raw Block struct :block,
+ * interprets it as an IndexBlock struct and
+ * returns a pointer to it. INCOMPLETE.
+ */
 IndexBlock *get_index_block(Block *block)
 {
     IndexBlock *index_block = malloc(sizeof(IndexBlock));
@@ -136,6 +164,13 @@ IndexBlock *get_index_block(Block *block)
 
 /* BITMAP MANAGEMENT */
 
+/*
+ * The method recieves a pointer to a Disk
+ * struct :disk and an integer :position
+ * representing the desired bit position
+ * inside the bitmap and returns its
+ * value (0 or 1).
+ */
 int bit_from_bitmap(Disk *disk, int position)
 {
     int chunk = position / 8;
@@ -144,6 +179,14 @@ int bit_from_bitmap(Disk *disk, int position)
 }
 
 
+/*
+ * The method recieves an unsigned char :byte
+ * and an integer :position which represents
+ * a bit's position inside :byte (position 0
+ * is the least significant bit of the byte).
+ * The method returns the bit in the position
+ * :position and can be a 0 or a 1.
+ */
 int bit_from_byte(unsigned char byte, int position)
 {
     int bit;
@@ -152,6 +195,15 @@ int bit_from_byte(unsigned char byte, int position)
 }
 
 
+/*
+ * The method recieves a pointer to a Disk
+ * struct :disk and an integer :position
+ * representing the desired bit position
+ * inside the bitmap. If the bit in :position
+ * is already a 1, the method returns 0 and
+ * changes nothing. If the bit is a 0, the
+ * method changes it to a 1 and returns 1.
+ */
 int turn_bitmap_bit_to_one(Disk *disk, int position)
 {
     int chunk = position / 8;
@@ -164,6 +216,15 @@ int turn_bitmap_bit_to_one(Disk *disk, int position)
 }
 
 
+/*
+ * The method recieves a pointer to a Disk
+ * struct :disk and an integer :position
+ * representing the desired bit position
+ * inside the bitmap. If the bit in :position
+ * is already a 0, the method returns 0 and
+ * changes nothing. If the bit is a 1, the
+ * method changes it to a 0 and returns 1.
+ */
 int turn_bitmap_bit_to_zero(Disk *disk, int position)
 {
     int chunk = position / 8;
@@ -176,6 +237,12 @@ int turn_bitmap_bit_to_zero(Disk *disk, int position)
 }
 
 
+/*
+ * The method recieves a pointer to a Disk
+ * struct :disk and returns the amount of
+ * blocks that are marked as used in the
+ * bitmap.
+ */
 int used_blocks(Disk *disk)
 {
     int used = 0;
@@ -190,6 +257,12 @@ int used_blocks(Disk *disk)
 }
 
 
+/*
+ * The method recieves a pointer to a Disk
+ * struct :disk and returns the amount of
+ * blocks that are marked as free in the
+ * bitmap.
+ */
 int free_blocks(Disk *disk)
 {
     int free = 0;
@@ -207,12 +280,26 @@ int free_blocks(Disk *disk)
 
 /* BIT FIDDELING */
 
+/*
+ * The method recieves a pointer to an array
+ * of unsigned chars :bytes and a pointer to
+ * an unsigned int :integer and reads the first
+ * 4 chars of :bytes as an integer into :integer
+ * using big endianness.
+ */
 void int_from_chars(unsigned char *bytes, unsigned int *integer)
 {
     *integer = (unsigned int) bytes[3] | ( (int)bytes[2] << 8 ) | ( (int)bytes[1] << 16 ) | ( (int)bytes[0] << 24 );
 }
 
 
+/*
+ * The method recieves a pointer to an array
+ * of unsigned chars :bytes and a pointer to
+ * an unsigned int :integer and reads :integer
+ * into the first 4 chars of :bytes using big
+ * endianness.
+ */
 void chars_from_int(unsigned char *bytes, unsigned int *integer)
 {
     bytes[0] = (*integer >> 24) & 0xFF;
