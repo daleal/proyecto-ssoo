@@ -152,6 +152,30 @@ int bit_from_byte(unsigned char byte, int position)
 }
 
 
+int turn_bitmap_bit_to_one(Disk *disk, int position)
+{
+    int chunk = position / 8;
+    int offset = 7 - (position % 8);
+    if (bit_from_bitmap(disk, position)) {
+        return 0;  // bit is already 1, error
+    }
+    disk->bitmap[chunk] += pow(2, offset);
+    return 1;
+}
+
+
+int turn_bitmap_bit_to_zero(Disk *disk, int position)
+{
+    int chunk = position / 8;
+    int offset = 7 - (position % 8);
+    if (!bit_from_bitmap(disk, position)) {
+        return 0;  // bit is already 0, error
+    }
+    disk->bitmap[chunk] -= pow(2, offset);
+    return 1;
+}
+
+
 int used_blocks(Disk *disk)
 {
     int used = 0;
