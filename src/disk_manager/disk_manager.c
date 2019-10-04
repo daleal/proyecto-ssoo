@@ -105,7 +105,36 @@ int close_disk(Disk *disk)
 
 
 
-/* BLOCK CONVERSIONS */
+/* NAVIGATION */
+
+/*
+ * The method recieves a Disk struct :disk and an
+ * unsigned int :pointer. If :pointer is 0, returns
+ * the index of the disk. If :pointer is between
+ * 129 (included) and TOTAL_BLOCKS (not included),
+ * it offsets the pointer by 129 and returns the
+ * block in that place from the array of blocks
+ * of :disk. In any other case, the function
+ * returns NULLS.
+ */
+Block *go_to_block(Disk *disk, unsigned int pointer)
+{
+    if (pointer == 0) {
+        // Get the index of the disk
+        return disk->index;
+    }
+    if ((pointer < (unsigned int)129) | (pointer >= (unsigned int)TOTAL_BLOCKS)) {
+        // Pointer points to a bitmap block (invalid navigation) or to
+        // a block outside of the disk
+        return NULL;
+    }
+    pointer -= 129;  // index block and bitmap blocks
+    return disk->blocks[pointer];
+}
+
+
+
+/* BLOCK MANAGEMENT */
 
 /*
  * The method recieves a raw Block struct :block,
@@ -133,6 +162,19 @@ DirectoryBlock *get_directory_block(Block *block)
     }
     free(buffer);
     return directory_block;
+}
+
+
+/*
+ * The method recieves a DirectoryBlock struct
+ * :block and frees its memory usage.
+ */
+void free_directory_block(DirectoryBlock *block)
+{
+    for (int offset = 0; offset < 32; offset++) {
+        free(block->directories[offset]);
+    }
+    free(block);
 }
 
 
