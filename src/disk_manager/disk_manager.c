@@ -121,14 +121,41 @@ DirectoryBlock *get_directory_block(Block *block)
 
 
 IndexBlock *get_index_block(Block *block)
-{
+{  
     IndexBlock *index_block = malloc(sizeof(IndexBlock));
-    unsigned char *buffer = malloc(sizeof(unsigned char) * 4);
+    unsigned char *size;
     for (int i = 0; i < 4; i++) {
-        buffer[i] = block->data[i];
+        size[i] = block->data[i];
     }
-    int_from_chars(buffer, &index_block->size);
-    free(buffer);
+    int_from_chars(size, &index_block->size);
+
+    unsigned char *buffer;
+    for (int i = 0; i < 252; i++){
+        for (int j = 0; j < 4; i++){
+            buffer[j] = block->data[i + 4 + j];
+        }
+        int_from_chars(buffer, &index_block->data_blocks[i]);
+    }
+
+    unsigned char *simple;
+    for (int i = 1008; i < 1012; i++){
+        simple[i%4] = block->data[i];
+    }
+    int_from_chars(simple, &index_block->simple_directioning_block);
+
+    unsigned char *doublex;
+    for (int i = 1012; i < 1016; i++){
+        doublex[i%4] = block->data[i];
+    }
+    int_from_chars(simple, &index_block->double_directioning_block);
+
+    
+    unsigned char *triple;
+    for (int i = 1016; i < 1024; i++){
+        triple[i%4] = block -> data[i];
+    }
+    int_from_chars(doublex, &index_block->triple_directioning_block);
+
     return index_block;
 }
 
