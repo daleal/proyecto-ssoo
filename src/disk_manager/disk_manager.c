@@ -225,7 +225,7 @@ DirectioningBlock *get_directioning_block(Block *block)
  * The method recieves a DirectioningBlock struct
  * :block and frees its memory usage.
  */
-void free_directory_block(DirectoryBlock *block)
+void free_directioning_block(DirectioningBlock *block)
 {
     free(block);
 }
