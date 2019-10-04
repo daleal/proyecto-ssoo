@@ -30,6 +30,8 @@ IndexBlock *get_index_block(Block *block);
 /* BITMAP MANAGEMENT */
 int bit_from_bitmap(Disk *disk, int position);
 int bit_from_byte(unsigned char byte, int position);
+int turn_bitmap_bit_to_one(Disk *disk, int position);
+int turn_bitmap_bit_to_zero(Disk *disk, int position);
 int used_blocks(Disk *disk);
 int free_blocks(Disk *disk);
 
