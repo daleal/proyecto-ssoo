@@ -152,7 +152,7 @@ IndexBlock *get_index_block(Block *block)
     
     unsigned char *triple;
     for (int i = 1016; i < 1024; i++){
-        triple[i%4] = block -> data[i];
+        triple[i%4] = block->data[i];
     }
     int_from_chars(doublex, &index_block->triple_directioning_block);
 
