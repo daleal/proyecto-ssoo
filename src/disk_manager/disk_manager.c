@@ -37,6 +37,11 @@ struct index_block {
     unsigned int triple_directioning_block;
 };
 
+// Directioning Block struct
+struct directioning_block {
+    unsigned int pointers[256];
+};
+
 
 // Vainilla Block struct
 struct block {
@@ -193,6 +198,36 @@ IndexBlock *get_index_block(Block *block)
     int_from_chars(buffer, &index_block->size);
     free(buffer);
     return index_block;
+}
+
+
+/*
+ * The method recieves a raw Block struct :block,
+ * interprets it as a DirectioningBlock struct and
+ * returns a pointer to it.
+ */
+DirectioningBlock *get_directioning_block(Block *block)
+{
+    DirectioningBlock *directioning_block = malloc(sizeof(DirectioningBlock));
+    unsigned char *buffer = malloc(sizeof(unsigned char) * 4);
+    for (int pointer = 0; pointer < 256; pointer++) {
+        for (int offset = 0; offset < 4; offset++) {
+            buffer[offset] = block->data[(pointer * 4) + offset];
+        }
+        int_from_chars(buffer, &directioning_block->pointers[pointer]);
+    }
+    free(buffer);
+    return directioning_block;
+}
+
+
+/*
+ * The method recieves a DirectioningBlock struct
+ * :block and frees its memory usage.
+ */
+void free_directory_block(DirectoryBlock *block)
+{
+    free(block);
 }
 
 
