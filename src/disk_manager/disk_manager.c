@@ -64,16 +64,13 @@ Disk *open_disk(char *diskname)
     }
 
     Disk *disk = malloc(sizeof(Disk));
-    Block *index = malloc(sizeof(Block));
+    disk->index = malloc(sizeof(Block));
 
     // Get raw index block
-    fread(index->data, sizeof(unsigned char), BLOCK_SIZE, raw);
+    fread(disk->index, sizeof(unsigned char), BLOCK_SIZE, raw);
 
     // Get bitmap blocks
     fread(disk->bitmap, sizeof(unsigned char), BITMAP_BYTES, raw);
-
-    // Interpret index block
-    disk->index = get_directory_block(index);
 
     for (int i = 0; i < DISK_BLOCKS; i++) {
         disk->blocks[i] = malloc(sizeof(Block));
@@ -81,7 +78,6 @@ Disk *open_disk(char *diskname)
     }
 
     fclose(raw);
-    free(index);
 
     return disk;
 }
@@ -101,9 +97,6 @@ int close_disk(Disk *disk)
     }
     for (int i = 0; i < DISK_BLOCKS; i++) {
         free(disk->blocks[i]);
-    }
-    for (int i = 0; i < 32; i++) {
-        free(disk->index->directories[i]);
     }
     free(disk->index);
     free(disk);

@@ -14,7 +14,7 @@ typedef struct directory_block DirectoryBlock;
 
 // Disk struct
 typedef struct disk {
-    DirectoryBlock *index;
+    Block *index;
     unsigned char bitmap[BITMAP_BYTES];
     Block *blocks[DISK_BLOCKS];
 } Disk;
