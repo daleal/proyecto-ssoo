@@ -193,6 +193,10 @@ void cr_ls(char *path)
         return;
     }
     Block *raw = cr_cd(mounted_disk, path);
+    if (raw == NULL) {
+        log_error("No such directory");
+        return;
+    }
     DirectoryBlock *directory = get_directory_block(raw);
     DirectoryEntry *subdirectory;
     for (int i = 0; i < 32; i++) {
