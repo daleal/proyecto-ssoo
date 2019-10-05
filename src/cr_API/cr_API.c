@@ -10,7 +10,8 @@
 
 // File structs
 struct crfile {
-
+    Block *block;
+    int size;
 };
 
 
@@ -27,7 +28,66 @@ crFILE *cr_open(char *path, char mode)
 
 int cr_read(crFILE *file_desc, void *buffer, int nbytes)
 {
-    return 0;
+    
+    int read;
+    int bytes = file_desc->reader + nbytes;
+    if (bytes > file_desc->index->size){
+        read = file_desc->index->size - file_desc->reader;
+    }
+    else read = nbytes;
+
+    unsigned char save[read];
+    int data = 32*252;
+    int simple = 32*253;
+    int doublex = 32*254;
+    int triple = 32*255;
+
+    Block *block;
+    DirectioningBlock *directoring;
+    if (file_desc->reader < data){
+        int actual = reader_to_block(file_desc->reader);
+        block = go_to_block(disk,file_desc->index->data_blocks[actual]);
+    }
+    else if (file_desc->reader < simle){
+        block = go_to_block(disk, file_desc->index->simple_directioning_block);
+        directoring = get_directioning_block(block);
+    }
+    else if (file_desc->reader < doublex){
+        block = go_to_block(disk, file_desc->index->double_directioning_block);
+        directoring = get_directioning_block(block);
+    }
+    else if (file_desc->reader < triple){
+        block = go_to_block(disk, file_desc->index->triple_directioning_block);
+        directoring = get_directioning_block(block);
+    }
+    
+    for (int i = 0; i <= read; i++){
+
+        if (i + file_desc->reader < data){
+
+            if ((reader + i)%32 == 0) {
+                actual = reader_to_block(reader + i);
+                block = go_to_block(disk,file_desc->index->data_blocks[actual]);
+            }
+            save[i] = block[i%32];
+        }
+
+        else if (i + file_desc->reader < simple){
+            save[i] = directoring[i%32];
+        }
+
+        else if (i + file_desc->reader < doublex){
+            save[i] = directoring_double[i%32];
+        }
+
+        else{
+            save[i] = directoring_triple[i%32];
+        }
+    }
+
+    *buffer = save;
+    file_desc->reader = file_desc->reader + read;
+    return read;
 }
 
 
@@ -228,3 +288,9 @@ int cr_mkdir(char *foldername)
 {
     return 0;
 }
+
+int reader_to_block(int reader)
+{
+    return reader / 32;
+}
+
