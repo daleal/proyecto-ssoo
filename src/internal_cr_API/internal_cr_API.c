@@ -11,13 +11,12 @@ Block *cr_cd(Disk *disk, char *path)
 {
     char tokenize[strlen(path) + 1];
     strcpy(tokenize, path);
-    strtok(tokenize, "/");  // Remove initial slash
+    char *subfolder = strtok(tokenize, "/");  // Remove initial slash
     Block *actual = disk->index;
     DirectoryBlock *interpreted = get_directory_block(actual);
     DirectoryEntry *directory;
     bool found;
-    char *subfolder;
-    while ((subfolder = strtok(NULL, "/"))) {
+    while (subfolder) {
         found = false;
         for (int i = 0; i < 32; i++) {
             directory = interpreted->directories[i];
@@ -44,6 +43,7 @@ Block *cr_cd(Disk *disk, char *path)
             free_directory_block(interpreted);
             return NULL;
         }
+        subfolder = strtok(NULL, "/");
     }
     free_directory_block(interpreted);
     return actual;
