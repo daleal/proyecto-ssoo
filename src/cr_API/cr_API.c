@@ -21,6 +21,7 @@ Disk *mounted_disk = NULL;
 crFILE *cr_open(char *path, char mode)
 {
     crFILE *file_desc = malloc(sizeof(crFILE));
+    cr_mkdir("/wenawena");
     return file_desc;
 }
 
@@ -249,8 +250,21 @@ int cr_mkdir(char *foldername)
             break;
         }
     }
+    // Translate father block to raw block
+    raw_father = go_to_block(mounted_disk, father_pointer);
+    free_directory_block(father);
+    father = get_directory_block(raw_father);
+    reverse_translate_block_directory(father, raw_father);
+    // Translate continuation blocks to raw blocks
+    while (father->directories[31]->status == (unsigned char)32) {
+        raw_father = go_to_block(mounted_disk, father->directories[31]->file_pointer);
+        free_directory_block(father);
+        father = get_directory_block(raw_father);
+        reverse_translate_block_directory(father, raw_father);
+    }
 
     // Fill new dir
+    Block *raw_dir;
     DirectoryBlock *new_dir = malloc(sizeof(DirectoryBlock));
 
     // Father Directory entry
@@ -270,8 +284,11 @@ int cr_mkdir(char *foldername)
         new_dir->directories[i] = malloc(sizeof(DirectoryEntry));
         new_dir->directories[i]->status = (unsigned char)1;
     }
+    // Translate dir block to raw block
+    raw_dir = go_to_block(mounted_disk, new_dir_pointer);
+    reverse_translate_block_directory(new_dir, raw_dir);
 
-    /* TEMPORARY CLEAN */
+    free_directory_block(father);
     free_directory_block(new_dir);
 
     return 1;
