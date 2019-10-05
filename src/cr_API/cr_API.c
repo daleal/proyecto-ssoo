@@ -126,6 +126,10 @@ void cr_bitmap(unsigned block, bool hex)
 
 int cr_exists(char *path)
 {
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return 0;
+    }
     char path_duplicate[strlen(path) + 1];
     strcpy(path_duplicate, path);
     int start_point = strlen(path_duplicate);
