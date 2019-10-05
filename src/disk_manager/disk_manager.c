@@ -298,6 +298,36 @@ int turn_bitmap_bit_to_zero(Disk *disk, int position)
 
 /*
  * The method recieves a pointer to a Disk
+ * struct :disk. It then looks for the first
+ * free block inside :disk. If there are no
+ * free blocks, it returns -1. Otherwise,
+ * it marks the block as used. If this fails,
+ * the function returns -1. Otherwise, it
+ * returns the number of the block.
+ */
+int get_free_block_number(Disk *disk)
+{
+    int block;
+    for (int i = 0; i < BITMAP_BYTES; i++) {
+        for (int j = 0; j < 8; j++) {
+            block = (i * 8) + j;
+            if (!bit_from_bitmap(disk, block)) {
+                // :block is empty
+                if (turn_bitmap_bit_to_one(disk, block)) {
+                    // If :block gets transformed to a 1 in the bitmap
+                    return block;
+                } else {
+                    return -1;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+
+/*
+ * The method recieves a pointer to a Disk
  * struct :disk and returns the amount of
  * blocks that are marked as used in the
  * bitmap.
