@@ -3,6 +3,7 @@
 #include "../constants/constants.h"
 #include "../error_handler/error_handler.h"
 #include "../disk_manager/disk_manager.h"
+#include "../internal_cr_API/internal_cr_API.h"
 #include "cr_API.h"
 
 

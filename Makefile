@@ -41,7 +41,7 @@ LIB=$(MTH) $(PNG)
 ###############################################################################
 
 # Directorios con elementos de uso común
-COMMON=constants error_handler disk_manager cr_API
+COMMON=constants error_handler disk_manager internal_cr_API cr_API
 
 # Directorios que serán compilados a un programa
 PROGRAMS=crfs
