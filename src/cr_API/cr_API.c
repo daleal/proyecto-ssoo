@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../constants/constants.h"
 #include "../error_handler/error_handler.h"
 #include "../disk_manager/disk_manager.h"
+#include "../internal_cr_API/internal_cr_API.h"
 #include "cr_API.h"
 
 
@@ -124,13 +126,101 @@ void cr_bitmap(unsigned block, bool hex)
 
 int cr_exists(char *path)
 {
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return 0;
+    }
+    char path_duplicate[strlen(path) + 1];
+    strcpy(path_duplicate, path);
+    int start_point = strlen(path_duplicate);
+    Block *raw;
+    DirectoryBlock *directory;
+    DirectoryEntry *subdirectory;
+    // Remove last directory/file from the path
+    for (int i = strlen(path_duplicate) - 1; i >= 0; i--) {
+        if (path_duplicate[i] == '/') {
+            path_duplicate[i] = '\0';
+            break;
+        } else {
+            --start_point;
+        }
+    }
+    // Get incognito file name
+    char incognito[strlen(path) - start_point + 1];
+    for (int i = 0; i < strlen(path) - start_point; i++) {
+        incognito[i] = path[start_point + i];
+    }
+    incognito[strlen(path) - start_point] = '\0';
+    // Find if :incognito exists
+    if (!strcmp(path_duplicate, "")) {
+        // If path duplicate is now empty call cr_cd with "/"
+        raw = cr_cd(mounted_disk, "/");
+    } else {
+        // If path is not empty
+        raw = cr_cd(mounted_disk, path_duplicate);
+    }
+    if (raw == NULL) {
+        // Father of the last file could not be found
+        return 0;
+    }
+    directory = get_directory_block(raw);
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
+            directory = get_directory_block(raw);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (
+            (subdirectory->status == (unsigned char)2) |    // Directory
+            (subdirectory->status == (unsigned char)4) |    // File
+            (subdirectory->status == (unsigned char)8) |    // Same Dir
+            (subdirectory->status == (unsigned char)16)) {  // Father Dir
+            // :subdirectory corresponds to valid entry
+            if (!strcmp(subdirectory->name, incognito)) {
+                // :subdirectory corresponds to the file we were looking for
+                free_directory_block(directory);
+                return 1;
+            }
+        }
+    }
+    free_directory_block(directory);
     return 0;
 }
 
 
 void cr_ls(char *path)
 {
-
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return;
+    }
+    Block *raw = cr_cd(mounted_disk, path);
+    if (raw == NULL) {
+        log_error("No such directory");
+        return;
+    }
+    DirectoryBlock *directory = get_directory_block(raw);
+    DirectoryEntry *subdirectory;
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
+            directory = get_directory_block(raw);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (
+            (subdirectory->status == (unsigned char)2) |    // Directory
+            (subdirectory->status == (unsigned char)4) |    // File
+            (subdirectory->status == (unsigned char)8) |    // Same Dir
+            (subdirectory->status == (unsigned char)16)) {  // Father Dir
+            // :subdirectory corresponds to valid entry
+            printf("%s\n", subdirectory->name);
+        }
+    }
+    free_directory_block(directory);
 }
 
 

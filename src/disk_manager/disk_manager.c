@@ -4,51 +4,6 @@
 #include "disk_manager.h"
 
 
-// Directory Entry struct
-struct directory_entry {
-    unsigned char status;
-    // 1:  invalid
-    // 2:  valid, corresponds to a directory
-    // 4:  valid, corresponds to a file
-    // 8:  same directory
-    // 16: father directory
-    // 32: next (same) directory
-
-    char name[27];
-    // Empty spaces must be 0
-
-    unsigned int file_pointer;
-    // From 0 to 1048575
-};
-
-
-// Directory Block struct
-struct directory_block {
-    DirectoryEntry *directories[32];
-};
-
-
-// Index Block struct
-struct index_block {
-    unsigned int size;
-    unsigned int data_blocks[252];
-    unsigned int simple_directioning_block;
-    unsigned int double_directioning_block;
-    unsigned int triple_directioning_block;
-};
-
-// Directioning Block struct
-struct directioning_block {
-    unsigned int pointers[256];
-};
-
-
-// Vainilla Block struct
-struct block {
-    unsigned char data[BLOCK_SIZE];
-};
-
-
 /*
  * Opens a file named :diskname and returns a pointer
  * to a Disk struct containing an interpreted directory

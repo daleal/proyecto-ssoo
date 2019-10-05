@@ -210,15 +210,11 @@ int cr_exists(char *path);
 
 ### Description
 
-Function description
+Returns `1` if the file/directory `path` exists and `0` if it does not exist.
 
 ### Return Value and Error Handling
 
-Describe return value
-
-### Notes
-
-Aditional notes about the function
+The function returns `1` or `0`. If no disk is mounted, it logs a message to `stderr` and returns `0`.
 
 ## cr_ls
 
@@ -230,15 +226,11 @@ void cr_ls(char *path);
 
 ### Description
 
-Function description
+Prints to `stdout` the files and directories inside the directory `path`.
 
 ### Return Value and Error Handling
 
-Describe return value
-
-### Notes
-
-Aditional notes about the function
+The function returns void. In case that `path` does not exist, it logs a message to `stderr`. If no disk is mounted, it logs a message to `stderr`.
 
 ## cr_mkdir
 

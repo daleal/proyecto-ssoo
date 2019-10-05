@@ -6,12 +6,48 @@
 #define TOTAL_BLOCKS 1048576
 
 
-typedef struct directory_entry DirectoryEntry;
+/***************************************************
+ *                     STRUCTS                     *
+ ***************************************************/
 
-typedef struct block Block;
-typedef struct index_block IndexBlock;
-typedef struct directory_block DirectoryBlock;
-typedef struct directioning_block DirectioningBlock;
+// Directory Entry struct
+typedef struct directory_entry {
+    unsigned char status;
+    // 1:  invalid
+    // 2:  valid, corresponds to a directory
+    // 4:  valid, corresponds to a file
+    // 8:  same directory
+    // 16: father directory
+    // 32: next (same) directory
+
+    char name[27];
+    // Empty spaces must be 0
+
+    unsigned int file_pointer;
+    // From 0 to 1048575
+} DirectoryEntry;
+
+
+// Vainilla Block struct
+typedef struct block {
+    unsigned char data[BLOCK_SIZE];
+} Block;
+
+
+// Directory Block struct
+typedef struct directory_block {
+    DirectoryEntry *directories[32];
+} DirectoryBlock;
+
+
+// Index Block struct
+typedef struct index_block {
+    unsigned int size;
+    unsigned int data_blocks[252];
+    unsigned int simple_directioning_block;
+    unsigned int double_directioning_block;
+    unsigned int triple_directioning_block;
+} IndexBlock;
 
 
 // Disk struct
@@ -20,6 +56,10 @@ typedef struct disk {
     unsigned char bitmap[BITMAP_BYTES];
     Block *blocks[DISK_BLOCKS];
 } Disk;
+
+/****************************************************
+ *                   END OF STRUCTS                 *
+ ****************************************************/
 
 
 Disk *open_disk(char *diskname);
