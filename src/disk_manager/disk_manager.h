@@ -89,9 +89,14 @@ int bit_from_bitmap(Disk *disk, int position);
 int bit_from_byte(unsigned char byte, int position);
 int turn_bitmap_bit_to_one(Disk *disk, int position);
 int turn_bitmap_bit_to_zero(Disk *disk, int position);
+unsigned int get_free_block_number(Disk *disk);
 int used_blocks(Disk *disk);
 int free_blocks(Disk *disk);
 
 /* BIT FIDDELING */
 void int_from_chars(unsigned char *bytes, unsigned int *integer);
 void chars_from_int(unsigned char *bytes, unsigned int *integer);
+
+/* HELPER METHODS */
+void fill_directory_name(char *name_buffer, char *name);
+unsigned int get_directory_pointer(Disk *disk, DirectoryBlock *dir);
