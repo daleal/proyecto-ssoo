@@ -130,35 +130,13 @@ int cr_exists(char *path)
         log_error("No disk is mounted");
         return 0;
     }
-    char path_duplicate[strlen(path) + 1];
-    strcpy(path_duplicate, path);
-    int start_point = strlen(path_duplicate);
+    char new_path[strlen(path) + 1];
+    char filename[strlen(path) + 1];
     Block *raw;
     DirectoryBlock *directory;
     DirectoryEntry *subdirectory;
-    // Remove last directory/file from the path
-    for (int i = strlen(path_duplicate) - 1; i >= 0; i--) {
-        if (path_duplicate[i] == '/') {
-            path_duplicate[i] = '\0';
-            break;
-        } else {
-            --start_point;
-        }
-    }
-    // Get incognito file name
-    char incognito[strlen(path) - start_point + 1];
-    for (int i = 0; i < strlen(path) - start_point; i++) {
-        incognito[i] = path[start_point + i];
-    }
-    incognito[strlen(path) - start_point] = '\0';
-    // Find if :incognito exists
-    if (!strcmp(path_duplicate, "")) {
-        // If path duplicate is now empty call cr_cd with "/"
-        raw = cr_cd(mounted_disk, "/");
-    } else {
-        // If path is not empty
-        raw = cr_cd(mounted_disk, path_duplicate);
-    }
+    split_path(path, new_path, filename);
+    raw = cr_folder_cd(mounted_disk, new_path);
     if (raw == NULL) {
         // Father of the last file could not be found
         return 0;
@@ -178,7 +156,7 @@ int cr_exists(char *path)
             (subdirectory->status == (unsigned char)8) |    // Same Dir
             (subdirectory->status == (unsigned char)16)) {  // Father Dir
             // :subdirectory corresponds to valid entry
-            if (!strcmp(subdirectory->name, incognito)) {
+            if (!strcmp(subdirectory->name, filename)) {
                 // :subdirectory corresponds to the file we were looking for
                 free_directory_block(directory);
                 return 1;
