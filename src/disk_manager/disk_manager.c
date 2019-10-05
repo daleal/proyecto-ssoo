@@ -372,10 +372,7 @@ void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block 
             raw_block->data[n_byte_raw_block] = index_block_pointer[n_byte_block_pointer];
             n_byte_raw_block++;
         }
-
-        // This increase set cero for the next directory
-        n_byte_raw_block++;
-
+        
     }
     
 }
