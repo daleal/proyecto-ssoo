@@ -1,7 +1,10 @@
 #include <stdbool.h>
 
 // File structs
-typedef struct crfile crFILE;
+typedef struct crfile{
+    IndexBlock *index;
+    int reader; 
+} crFILE;
 
 // File management functions
 crFILE *cr_open(char *path, char mode);
@@ -19,3 +22,6 @@ void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
+
+//Auxiliary functions
+int reader_to_block(int reader);
