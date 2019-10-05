@@ -22,8 +22,8 @@ Block *cr_cd(Disk *disk, char *path)
             directory = interpreted->directories[i];
             if (directory->status == (unsigned char)32) {
                 // :directory is the continuation of :interpreted
-                free_directory_block(interpreted);
                 actual = go_to_block(disk, directory->file_pointer);
+                free_directory_block(interpreted);
                 interpreted = get_directory_block(actual);  // Get continuation
                 i = -1;  // So the loop starts over with the continuation
             } else if (directory->status == (unsigned char)2) {
@@ -31,8 +31,8 @@ Block *cr_cd(Disk *disk, char *path)
                 if (!strcmp(directory->name, subfolder)) {
                     // Directory corresponds to wanted subfolder
                     found = true;
-                    free_directory_block(interpreted);
                     actual = go_to_block(disk, directory->file_pointer);
+                    free_directory_block(interpreted);
                     interpreted = get_directory_block(actual);
                     break;
                 }

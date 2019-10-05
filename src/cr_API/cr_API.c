@@ -21,6 +21,8 @@ Disk *mounted_disk = NULL;
 crFILE *cr_open(char *path, char mode)
 {
     crFILE *file_desc = malloc(sizeof(crFILE));
+    cr_ls("/asdf");
+    printf("%i\n", cr_exists("/dir/asddfda"));
     return file_desc;
 }
 
@@ -168,8 +170,8 @@ int cr_exists(char *path)
         subdirectory = directory->directories[i];
         if (subdirectory->status == (unsigned char)32) {
             // :subdirectory is the continuation of :directory
-            free_directory_block(directory);
             raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
             directory = get_directory_block(raw);  // Get continuation
             i = -1;  // So the loop starts over with the continuation
         } else if (
@@ -207,8 +209,8 @@ void cr_ls(char *path)
         subdirectory = directory->directories[i];
         if (subdirectory->status == (unsigned char)32) {
             // :subdirectory is the continuation of :directory
-            free_directory_block(directory);
             raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
             directory = get_directory_block(raw);  // Get continuation
             i = -1;  // So the loop starts over with the continuation
         } else if (
