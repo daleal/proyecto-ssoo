@@ -21,7 +21,7 @@ Block *cr_cd(Disk *disk, char *path)
     }
     for (int i = 0; i < 32; i++) {
         directory = block->directories[i];
-        if (directory->status == (unsigned char)32) {
+        if ((directory->status == (unsigned char)32) & (i != 0)) {
             // :directory is the continuation of :block
             raw = go_to_block(disk, directory->file_pointer);
             free_directory_block(block);
@@ -48,12 +48,10 @@ Block *cr_cd(Disk *disk, char *path)
         return NULL;
     } else {
         // In case that :raw is the continuation of another directory
-        for (int i = 0; i < 32; i++) {
-            directory = block->directories[i];
-            if (directory->status == (unsigned char)8) {
-                raw = go_to_block(disk, directory->file_pointer);
-                break;
-            }
+        while (block->directories[0]->status == (unsigned char)32) {
+            raw = go_to_block(disk, block->directories[0]->file_pointer);
+            free_directory_block(block);
+            block = get_directory_block(raw);
         }
         free_directory_block(block);
         return raw;
@@ -78,7 +76,7 @@ Block *cr_folder_cd(Disk *disk, char *path)
         found = false;
         for (int i = 0; i < 32; i++) {
             directory = interpreted->directories[i];
-            if (directory->status == (unsigned char)32) {
+            if ((directory->status == (unsigned char)32) & (i != 0)) {
                 // :directory is the continuation of :interpreted
                 actual = go_to_block(disk, directory->file_pointer);
                 free_directory_block(interpreted);
@@ -106,12 +104,10 @@ Block *cr_folder_cd(Disk *disk, char *path)
         subfolder = strtok(NULL, "/");
     }
     // In case that :actual is the continuation of another directory
-    for (int i = 0; i < 32; i++) {
-        directory = interpreted->directories[i];
-        if (directory->status == (unsigned char)8) {
-            actual = go_to_block(disk, directory->file_pointer);
-            break;
-        }
+    while (interpreted->directories[0]->status == (unsigned char)32) {
+        actual = go_to_block(disk, interpreted->directories[0]->file_pointer);
+        free_directory_block(interpreted);
+        interpreted = get_directory_block(actual);
     }
     free_directory_block(interpreted);
     return actual;
