@@ -140,10 +140,10 @@ void free_directory_block(DirectoryBlock *block)
 /*
  * The method recieves a raw Block struct :block,
  * interprets it as an IndexBlock struct and
- * returns a pointer to it. INCOMPLETE.
+ * returns a pointer to it.
  */
 IndexBlock *get_index_block(Block *block)
-{  
+{
     IndexBlock *index_block = malloc(sizeof(IndexBlock));
     unsigned char size[4];
     for (int i = 0; i < 4; i++) {
@@ -170,7 +170,7 @@ IndexBlock *get_index_block(Block *block)
         doublex[i%4] = block->data[i];
     }
     int_from_chars(doublex, &index_block->double_directioning_block);
-    
+
     unsigned char triple[4];
     for (int i = 1020; i < 1024; i++){
         triple[i%4] = block->data[i];
@@ -178,6 +178,16 @@ IndexBlock *get_index_block(Block *block)
     int_from_chars(triple, &index_block->triple_directioning_block);
 
     return index_block;
+}
+
+
+/*
+ * The method recieves an IndexBlock struct
+ * :block and frees its memory usage.
+ */
+void free_index_block(IndexBlock *block)
+{
+    free(block);
 }
 
 
