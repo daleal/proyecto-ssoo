@@ -21,8 +21,6 @@ Disk *mounted_disk = NULL;
 crFILE *cr_open(char *path, char mode)
 {
     crFILE *file_desc = malloc(sizeof(crFILE));
-    cr_ls("/asdf");
-    printf("%i\n", cr_exists("/dir/asddfda"));
     return file_desc;
 }
 
