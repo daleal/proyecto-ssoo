@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "disk_manager.h"
 
@@ -305,7 +306,7 @@ int turn_bitmap_bit_to_zero(Disk *disk, int position)
  * the function returns -1. Otherwise, it
  * returns the number of the block.
  */
-int get_free_block_number(Disk *disk)
+unsigned int get_free_block_number(Disk *disk)
 {
     int block;
     for (int i = 0; i < BITMAP_BYTES; i++) {
@@ -317,12 +318,12 @@ int get_free_block_number(Disk *disk)
                     // If :block gets transformed to a 1 in the bitmap
                     return block;
                 } else {
-                    return -1;
+                    return 0;
                 }
             }
         }
     }
-    return -1;
+    return 0;
 }
 
 
@@ -395,4 +396,62 @@ void chars_from_int(unsigned char *bytes, unsigned int *integer)
     bytes[1] = (*integer >> 16) & 0xFF;
     bytes[2] = (*integer >> 8) & 0xFF;
     bytes[3] = *integer & 0xFF;
+}
+
+
+
+/* HELPER METHODS */
+
+/*
+ * Given a name :name for a file and a
+ * name buffer :name_buffer, fills the
+ * buffer whit the first 27 chars of
+ * :name. If :name has less than 27
+ * chars, fills the rest of :name_buffer
+ * with '\0'.
+ */
+void fill_directory_name(char *name_buffer, char *name)
+{
+    if (strlen(name) < 28) {
+        int zero_filler = 0;
+        // Copy name to name buffer
+        for (int i = 0; i < strlen(name); i++) {
+            name_buffer[i] = name[i];
+            ++zero_filler;
+        }
+        // Fill buffer with '\0'
+        for (int j = zero_filler; j < 27; j++) {
+            name_buffer[j] = '\0';
+        }
+    } else {
+        // :name has more than 27 chars
+        for (int i = 0; i < 27; i++) {
+            name_buffer[i] = name[i];  // Truncate name in the name buffer
+        }
+    }
+}
+
+
+/*
+ * The method recieves a DirectoryBlock
+ * struct :dir and returns the unsigned
+ * int pointer to itself.
+ */
+unsigned int get_directory_pointer(Disk *disk, DirectoryBlock *dir)
+{
+    if (dir->directories[0]->status == (unsigned char)32) {
+        Block *raw = go_to_block(disk, dir->directories[0]->file_pointer);
+        free_directory_block(dir);
+        dir = get_directory_block(raw);
+        return get_directory_pointer(disk, dir);
+    } else {
+        DirectoryEntry *directory;
+        for (int i = 0; i < 32; i++) {
+            directory = dir->directories[i];
+            if (directory->status == (unsigned char)8) {
+                return directory->file_pointer;
+            }
+        }
+    }
+    return 0;
 }

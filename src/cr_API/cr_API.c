@@ -204,5 +204,75 @@ void cr_ls(char *path)
 
 int cr_mkdir(char *foldername)
 {
-    return 0;
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return 0;
+    }
+    char new_path[strlen(foldername) + 1];
+    char filename[strlen(foldername) + 1];
+    Block *raw_father;
+    DirectoryBlock *father;
+    unsigned int father_pointer;
+    unsigned int new_dir_pointer;
+    DirectoryEntry *subdirectory;
+    split_path(foldername, new_path, filename);
+    raw_father = cr_folder_cd(mounted_disk, new_path);
+    if (raw_father == NULL) {
+        // Father could not be found
+        return 0;
+    }
+    father = get_directory_block(raw_father);
+    father_pointer = get_directory_pointer(mounted_disk, father);
+    if (!(new_dir_pointer = get_free_block_number(mounted_disk))) {
+        log_error("No disk space left");
+        return 0;
+    }
+
+    // Fill father dir
+    for (int i = 0; i < 32; i++) {
+        subdirectory = father->directories[i];
+        if ((subdirectory->status == (unsigned char)32) & (i != 0)) {
+            // :subdirectory is the continuation of :father
+            raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(father);
+            father = get_directory_block(raw_father);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (
+            (subdirectory->status != (unsigned char)2) &    // Directory
+            (subdirectory->status != (unsigned char)4) &    // File
+            (subdirectory->status != (unsigned char)8) &    // Same Dir
+            (subdirectory->status != (unsigned char)16)) {  // Father Dir
+            // :subdirectory corresponds to invalid entry
+            subdirectory->status = (unsigned char)2;
+            fill_directory_name(subdirectory->name, filename);
+            subdirectory->file_pointer = new_dir_pointer;
+            break;
+        }
+    }
+
+    // Fill new dir
+    DirectoryBlock *new_dir = malloc(sizeof(DirectoryBlock));
+
+    // Father Directory entry
+    new_dir->directories[0] = malloc(sizeof(DirectoryEntry));
+    new_dir->directories[0]->status = (unsigned char)16;
+    new_dir->directories[0]->file_pointer = father_pointer;
+    fill_directory_name(new_dir->directories[0]->name, "..");
+
+    // Self Directory entry
+    new_dir->directories[1] = malloc(sizeof(DirectoryEntry));
+    new_dir->directories[1]->status = (unsigned char)8;
+    new_dir->directories[1]->file_pointer = new_dir_pointer;
+    fill_directory_name(new_dir->directories[1]->name, ".");
+
+    // Invalid Directories entries
+    for (int i = 2; i < 32; i++) {
+        new_dir->directories[i] = malloc(sizeof(DirectoryEntry));
+        new_dir->directories[i]->status = (unsigned char)1;
+    }
+
+    /* TEMPORARY CLEAN */
+    free_directory_block(new_dir);
+
+    return 1;
 }
