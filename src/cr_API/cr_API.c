@@ -131,7 +131,31 @@ int cr_exists(char *path)
 
 void cr_ls(char *path)
 {
-
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return;
+    }
+    Block *raw = cr_cd(mounted_disk, path);
+    DirectoryBlock *directory = get_directory_block(raw);
+    DirectoryEntry *subdirectory;
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            free_directory_block(directory);
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            directory = get_directory_block(raw);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (
+            (subdirectory->status == (unsigned char)2) |    // Directory
+            (subdirectory->status == (unsigned char)4) |    // File
+            (subdirectory->status == (unsigned char)8) |    // Same Dir
+            (subdirectory->status == (unsigned char)16)) {  // Father Dir
+            // :subdirectory corresponds to valid entry
+            printf("%s\n", subdirectory->name);
+        }
+    }
+    free_directory_block(directory);
 }
 
 
