@@ -72,6 +72,8 @@ Block *go_to_block(Disk *disk, unsigned int pointer);
 DirectoryBlock *get_directory_block(Block *block);
 void free_directory_block(DirectoryBlock *block);
 IndexBlock *get_index_block(Block *block);
+DirectioningBlock *get_directioning_block(Block *block);
+void free_directioning_block(DirectioningBlock *block);
 
 /* BITMAP MANAGEMENT */
 int bit_from_bitmap(Disk *disk, int position);
