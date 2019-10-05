@@ -50,6 +50,12 @@ typedef struct index_block {
 } IndexBlock;
 
 
+// Directioning Block struct
+typedef struct directioning_block {
+    unsigned int pointers[256];
+} DirectioningBlock;
+
+
 // Disk struct
 typedef struct disk {
     Block *index;
