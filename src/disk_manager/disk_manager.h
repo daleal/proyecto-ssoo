@@ -81,6 +81,9 @@ IndexBlock *get_index_block(Block *block);
 DirectioningBlock *get_directioning_block(Block *block);
 void free_directioning_block(DirectioningBlock *block);
 
+/* BLOCK REVERSE TRANSLATE */
+void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block);
+
 /* BITMAP MANAGEMENT */
 int bit_from_bitmap(Disk *disk, int position);
 int bit_from_byte(unsigned char byte, int position);

@@ -337,6 +337,48 @@ int free_blocks(Disk *disk)
 
 
 
+/* BLOCK REVERSE TRANSLATE */
+
+/*
+ * The method recieves a pointer to a raw Block
+ * and a pointer to a DirectoryBlock. This give
+ * the information of the DirectoryBlock to
+ * the raw Block.
+ */
+void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block){ 
+    
+    int n_byte_raw_block = 0;
+    unsigned char index_block_pointer[4];
+
+    for (int n_dir = 0; n_dir < 32; n_dir++)
+    {
+        // Reverse status
+        raw_block->data[n_byte_raw_block] = interpreted_block -> directories[n_dir]->status;
+        n_byte_raw_block++;
+
+        // Reverse name
+        for (int n_byte_len_name = 0; n_byte_len_name < 27; n_byte_len_name++)
+        {
+            raw_block->data[n_byte_raw_block] = interpreted_block -> directories[n_dir]->name[n_byte_len_name];
+            n_byte_raw_block++;
+        }
+
+        // Get index block
+        chars_from_int(index_block_pointer, &interpreted_block -> directories[n_dir]->file_pointer);
+        
+        // Reverse index block pointer
+        for (int n_byte_block_pointer = 0; n_byte_block_pointer < 4; n_byte_block_pointer++)
+        {
+            raw_block->data[n_byte_raw_block] = index_block_pointer[n_byte_block_pointer];
+            n_byte_raw_block++;
+        }
+        
+    }
+    
+}
+
+
+
 /* BIT FIDDELING */
 
 /*
