@@ -111,7 +111,7 @@ DirectoryBlock *get_directory_block(Block *block)
         // Get entry status
         directory_block->directories[offset]->status = block->data[32 * offset];
         // Get entry name
-        for (int i = 0; i < 28; i++) {
+        for (int i = 0; i < 27; i++) {
             directory_block->directories[offset]->name[i] = block->data[(32 * offset) + i + 1];
         }
         // Get index block pointer
