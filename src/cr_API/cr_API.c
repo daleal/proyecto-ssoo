@@ -2,16 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../error_handler/error_handler.h"
-#include "../disk_manager/disk_manager.h"
-#include "../internal_cr_API/internal_cr_API.h"
 #include "cr_API.h"
-
-
-// File structs
-struct crfile {
-    IndexBlock *index;
-    unsigned long reader;
-};
 
 
 Disk *mounted_disk = NULL;
@@ -61,7 +52,7 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
         nbytes = file_desc->index->size - file_desc->reader;
     }
     while (nbytes--) {
-        data_read[read++] = *get_file_byte(file_desc, file_desc->reader);
+        data_read[read++] = *get_file_byte(mounted_disk, file_desc, file_desc->reader);
         ++file_desc->reader;
     }
     return read;
@@ -82,7 +73,7 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
         if (data[file_desc->index->size] == '\0') {
             break;
         } else {
-            location = get_file_byte(file_desc, counter);
+            location = get_file_byte(mounted_disk, file_desc, counter);
             *location = data[file_desc->index->size++];
             ++counter;
         }
@@ -353,79 +344,4 @@ int cr_mkdir(char *foldername)
     free_directory_block(father);
 
     return 1;
-}
-
-
-/*
- * The method recieves a Disk struct pointer :disk,
- * a crFILE struct pointer :file_desc and an unsigned
- * long :position. It then returns a pointer to the
- * byte corresponding to :position inside of the file
- * :file_desc.
- */
-unsigned char *get_file_byte(crFILE *file_desc, unsigned long position)
-{
-    Block *aux;
-    DirectioningBlock *simple;
-    DirectioningBlock *doublex;
-    DirectioningBlock *triple;
-    IndexBlock *index = file_desc->index;
-    int offset;
-    int data_block;
-    int simple_block;
-    int doublex_block;
-    if (position < DATA_BYTES_LIMIT) {
-        data_block = position / BLOCK_SIZE;
-        offset = position % BLOCK_SIZE;
-        aux = go_to_block(mounted_disk, index->data_blocks[data_block]);
-        return &aux->data[offset];
-    } else if (position < SIMPLE_DIRECT_BYTES_LIMIT) {
-        // Offset to the simple directioning block
-        position -= DATA_BYTES_LIMIT;
-        aux = go_to_block(mounted_disk, index->simple_directioning_block);
-        simple = get_directioning_block(aux);
-        data_block = position / BLOCK_SIZE;
-        offset = position % BLOCK_SIZE;
-        aux = go_to_block(mounted_disk, simple->pointers[data_block]);
-        free_directioning_block(simple);
-        return &aux->data[offset];
-    } else if (position < DOUBLE_DIRECT_BYTES_LIMIT) {
-        // Offset to the double directioning block
-        position -= SIMPLE_DIRECT_BYTES_LIMIT;
-        aux = go_to_block(mounted_disk, index->double_directioning_block);
-        doublex = get_directioning_block(aux);
-        simple_block = position / (BLOCK_SIZE * 256);
-        aux = go_to_block(mounted_disk, doublex->pointers[simple_block]);
-        free_directioning_block(doublex);
-        simple = get_directioning_block(aux);
-        // Offset to the simple directioning block
-        position -= BLOCK_SIZE * 256 * simple_block;
-        data_block = position / BLOCK_SIZE;
-        offset = position % BLOCK_SIZE;
-        aux = go_to_block(mounted_disk, simple->pointers[data_block]);
-        free_directioning_block(simple);
-        return &aux->data[offset];
-    } else {
-        // Offset to the triple directioning block
-        position -= DOUBLE_DIRECT_BYTES_LIMIT;
-        aux = go_to_block(mounted_disk, index->triple_directioning_block);
-        triple = get_directioning_block(aux);
-        doublex_block = position / (BLOCK_SIZE * 256 * 256);
-        aux = go_to_block(mounted_disk, triple->pointers[doublex_block]);
-        free_directioning_block(triple);
-        doublex = get_directioning_block(aux);
-        // Offset to the double directioning block
-        position -= BLOCK_SIZE * 256 * 256 * doublex_block;
-        simple_block = position / (BLOCK_SIZE * 256);
-        aux = go_to_block(mounted_disk, doublex->pointers[simple_block]);
-        free_directioning_block(doublex);
-        simple = get_directioning_block(aux);
-        // Offset to the simple directioning block
-        position -= BLOCK_SIZE * 256 * simple_block;
-        data_block = position / BLOCK_SIZE;
-        offset = position % BLOCK_SIZE;
-        aux = go_to_block(mounted_disk, simple->pointers[data_block]);
-        free_directioning_block(simple);
-        return &aux->data[offset];
-    }
 }

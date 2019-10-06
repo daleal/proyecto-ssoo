@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include "../constants/constants.h"
 
 
 extern int errno;

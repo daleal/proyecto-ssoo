@@ -1,9 +1,8 @@
 #include <stdbool.h>
-#include "../constants/constants.h"
+#include "../internal_cr_API/internal_cr_API.h"
 
 
 // File structs
-typedef struct crfile crFILE;
 
 // File management functions
 crFILE *cr_open(char *path, char mode);
@@ -21,5 +20,3 @@ void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
-
-unsigned char *get_file_byte(crFILE *file_desc, unsigned long position);
