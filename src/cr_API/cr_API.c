@@ -78,6 +78,7 @@ crFILE *cr_open(char *path, char mode)
 
     // Variable for write mode, save the number of a invalid directory
     int n_directory_invalid;
+    int capture_invalid = 0;
 
     // Variable for write mode, use for save the pointer for create new index
     // block and the index block
@@ -95,8 +96,6 @@ crFILE *cr_open(char *path, char mode)
         DirectoryBlock *block = get_directory_block(raw);
         for (int n_dir = 0; n_dir < 32; n_dir++)
         {
-            // printf("status :- %u\n", block->directories[n_dir]->status);
-            // printf("name :- %s\n", block->directories[n_dir]->name);
             if (!strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
             {
                 exist_file_name = 1;
@@ -107,9 +106,14 @@ crFILE *cr_open(char *path, char mode)
 
 
             // Conditional only for write mode
-            if (block->directories[n_dir]->status == (unsigned char)1)
+            
+            if ((block->directories[n_dir]->status != (unsigned char)2) &    // Directory
+            (block->directories[n_dir]->status != (unsigned char)4) &    // File
+            (block->directories[n_dir]->status != (unsigned char)8) &    // Same Dir
+            (block->directories[n_dir]->status != (unsigned char)16) && !capture_invalid)
             {
                 n_directory_invalid = n_dir;
+                capture_invalid = 1;
             }
 
             // Conditional in case of search in the extension of directory
