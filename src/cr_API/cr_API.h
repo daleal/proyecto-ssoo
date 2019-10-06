@@ -1,5 +1,7 @@
 #include <stdbool.h>
 
+
+
 // File structs
 typedef struct crfile{
     IndexBlock *index;
@@ -25,3 +27,5 @@ int cr_mkdir(char *foldername);
 
 //Auxiliary functions
 int reader_to_block(int reader);
+int directioning_to_block(int reader, int mode, int pointer);
+int get_index(int reader, int mode);

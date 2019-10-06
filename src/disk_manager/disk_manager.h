@@ -1,3 +1,4 @@
+#define NUM_POINTERS 256
 #define BLOCK_SIZE 1024
 #define BITMAP_BYTES 131072
 // 1024 chars * 128 bitmap blocks = 131 072 chars of bitmap
