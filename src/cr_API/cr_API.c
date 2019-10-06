@@ -289,20 +289,11 @@ int cr_mkdir(char *foldername)
             subdirectory->status = (unsigned char)2;
             fill_directory_name(subdirectory->name, filename);
             subdirectory->file_pointer = new_dir_pointer;
+
+            // Translate father block to raw block
+            reverse_translate_block_directory(father, raw_father);
             break;
         }
-    }
-    // Translate father block to raw block
-    raw_father = go_to_block(mounted_disk, father_pointer);
-    free_directory_block(father);
-    father = get_directory_block(raw_father);
-    reverse_translate_block_directory(father, raw_father);
-    // Translate continuation blocks to raw blocks
-    while (father->directories[31]->status == (unsigned char)32) {
-        raw_father = go_to_block(mounted_disk, father->directories[31]->file_pointer);
-        free_directory_block(father);
-        father = get_directory_block(raw_father);
-        reverse_translate_block_directory(father, raw_father);
     }
 
     free_directory_block(father);
