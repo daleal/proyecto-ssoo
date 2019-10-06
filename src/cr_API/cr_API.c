@@ -23,11 +23,41 @@ crFILE *cr_open(char *path, char mode)
 {
     
     crFILE *file_desc = malloc(sizeof(crFILE));
-    char new_path[strlen(path) + 1];
+    // Variables for case of root
+    char* path_for_split;
+    char* extension = "/";
+    int path_has_backlas = 0;
+    // Review if have backslas
+    for (int i = 0; i < strlen(path); i++)
+    {
+        if (path[i]=='/')
+        {
+            path_has_backlas = 1;
+        }
+        
+    }
+    // In case dont have one, make a concatenate in the begin
+    // If have one, copy the same path
+    if (!path_has_backlas)
+    {
+        path_for_split = malloc(strlen(extension)+1+strlen(path));
+        strcpy(path_for_split, extension);
+        strcat(path_for_split, path);  
+    } else
+    {
+        path_for_split = malloc(1+strlen(path));
+        strcpy(path_for_split, path);
+    }
+    
+    
+
+    char new_path[strlen(path_for_split) + 1];
 
     // First split the path
-    char filename[strlen(path) + 1];
-    split_path(path, new_path, filename);
+    char filename[strlen(path_for_split) + 1];
+    split_path(path_for_split, new_path, filename);
+    // Free the path for split
+    free(path_for_split);
 
     // Condition in case the disk is unmounted
     if (mounted_disk == NULL) {
