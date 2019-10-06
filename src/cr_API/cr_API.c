@@ -37,7 +37,6 @@ crFILE *cr_open(char *path, char mode)
 
     // Second give the folder path to a raw block
     Block *raw =  cr_folder_cd(mounted_disk, new_path);
-    printf("%s\n", new_path);
 
     // Variable for a conditional filename
     int exist_file_name = 0;
@@ -482,9 +481,4 @@ int cr_mkdir(char *foldername)
     free_directory_block(father);
 
     return 1;
-}
-
-void test_cr_open(crFILE *file_desc)
-{
-    printf("size :- %d\n", file_desc->index->size);
 }

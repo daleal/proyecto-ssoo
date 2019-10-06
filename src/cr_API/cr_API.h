@@ -19,4 +19,3 @@ void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
-void test_cr_open(crFILE *file_desc);
