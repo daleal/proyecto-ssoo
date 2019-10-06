@@ -25,6 +25,8 @@ Disk *open_disk(char *diskname)
     }
 
     Disk *disk = malloc(sizeof(Disk));
+    strcpy(disk->diskname, diskname);
+
     disk->index = malloc(sizeof(Block));
 
     // Get raw index block
@@ -415,8 +417,8 @@ void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block 
  * the information of the IndexBlock to
  * the raw Block.
  */
-void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block){ 
-    
+void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block){
+
     int n_byte_raw_block = 0;
     unsigned char size_of_file[4];
     unsigned char temporal_pointer[4];
