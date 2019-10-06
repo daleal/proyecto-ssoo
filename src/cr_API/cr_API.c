@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "../error_handler/error_handler.h"
 #include "../disk_manager/disk_manager.h"
 #include "../internal_cr_API/internal_cr_API.h"
@@ -356,6 +357,10 @@ int cr_mkdir(char *foldername)
 }
 
 
+
+/* AUXILIARY METHODS */
+
+
 /*
  * The method recieves a Disk struct pointer :disk,
  * a crFILE struct pointer :file_desc and an unsigned
@@ -428,4 +433,94 @@ unsigned char *get_file_byte(crFILE *file_desc, unsigned long position)
         free_directioning_block(simple);
         return &aux->data[offset];
     }
+}
+
+
+/*
+ * The method recieves a destination path
+ * :destination and a DirectoryEntry struct
+ * :file_entry and copies the file pointed
+ * by :file_entry to the real filesystem
+ * inside :destination.
+ */
+int unload_file(char *destination, char *location, DirectoryEntry *file_entry)
+{
+    char full_path[strlen(destination) + 27 + 2];
+    sprintf(full_path, "%s/%s", destination, file_entry->name);
+
+    char virtual_path[strlen(location) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", location, file_entry->name);
+
+    if (access(full_path, F_OK) != -1) {
+        // File already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload file. File %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    // Open files
+    crFILE *reading_file = cr_open(virtual_path, 'r');
+    FILE *writing_file = fopen(full_path, "wb");
+
+    if (reading_file == NULL) {
+        // Virtual file does not exist
+        return -1;
+    }
+
+    // Get file data in the buffer
+    unsigned char buffer[reading_file->index->size];
+    cr_read(reading_file, buffer, reading_file->index->size);
+
+    // Write data in real file
+    fwrite(buffer, sizeof(unsigned char), reading_file->index->size, writing_file);
+
+    // Close files
+    cr_close(reading_file);
+    fclose(writing_file);
+}
+
+
+/*
+ * The method recieves a destination path
+ * :destination and a DirectoryEntry struct
+ * :folder_entry and copies the folder pointed
+ * by :folder_entry to the real filesystem
+ * inside :destination.
+ */
+int unload_folder(char *destination, char *location, DirectoryEntry *folder_entry)
+{
+    char full_path[strlen(destination) + 27 + 2];
+    sprintf(full_path, "%s/%s", destination, folder_entry->name);
+
+    char virtual_path[strlen(location) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", location, folder_entry->name);
+
+    if (access(full_path, F_OK) != -1) {
+        // File already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload file. File %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    // Open files
+    crFILE *reading_file = cr_open(virtual_path, 'r');
+    FILE *writing_file = fopen(full_path, "wb");
+
+    if (reading_file == NULL) {
+        // Virtual file does not exist
+        return -1;
+    }
+
+    // Get file data in the buffer
+    unsigned char buffer[reading_file->index->size];
+    cr_read(reading_file, buffer, reading_file->index->size);
+
+    // Write data in real file
+    fwrite(buffer, sizeof(unsigned char), reading_file->index->size, writing_file);
+
+    // Close files
+    cr_close(reading_file);
+    fclose(writing_file);
 }
