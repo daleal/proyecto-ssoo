@@ -1,0 +1,1 @@
+#define MAX_DISKNAME_LENGTH 256

@@ -128,7 +128,6 @@ void split_path(char *path, char *new_path, char *filename)
         new_path[strlen(new_path) - 1] = '\0';
     }
     total_length = strlen(new_path);
-    printf("PATH: %s\n", new_path);
     int start_point = strlen(new_path);
     // Remove last directory/file from the path
     for (int i = strlen(new_path) - 1; i >= 0; i--) {
