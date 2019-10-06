@@ -651,3 +651,36 @@ unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
 
     return new_dir_pointer;
 }
+
+/*
+ * The method recieves a Disk struct :disk and
+ * create an empty index_block If the disk fails to find an
+ * empty block, the method returns 0. Otherwise,
+ * it returns an unsigned int pointer to itself.
+ */
+unsigned int new_index_block(Disk *disk)
+{
+    unsigned int new_dir_pointer;
+    if (!(new_dir_pointer = get_free_block_number(disk))) {
+        return 0;
+    }
+
+    Block *raw_dir;
+    IndexBlock *new_dir = malloc(sizeof(IndexBlock));
+
+    new_dir -> size = 0;
+    for (int i = 0; i < 252; i++)
+    {
+        new_dir -> data_blocks[i] = 0;
+    }
+    
+    
+
+    // Translate dir block to raw block
+    raw_dir = go_to_block(disk, new_dir_pointer);
+    reverse_translate_index_block(new_dir, raw_dir);
+
+    free_index_block(new_dir);
+
+    return new_dir_pointer;
+}

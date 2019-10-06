@@ -103,3 +103,4 @@ void fill_directory_name(char *name_buffer, char *name);
 unsigned int get_directory_pointer(Disk *disk, DirectoryBlock *dir);
 unsigned int new_directory_block(Disk *disk, unsigned int father_pointer);
 unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer);
+unsigned int new_index_block(Disk *disk);
