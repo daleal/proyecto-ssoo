@@ -1,3 +1,5 @@
+#include "../constants/constants.h"
+
 #define BLOCK_SIZE 1024
 #define BITMAP_BYTES 131072
 // 1024 chars * 128 bitmap blocks = 131 072 chars of bitmap
@@ -58,6 +60,7 @@ typedef struct directioning_block {
 
 // Disk struct
 typedef struct disk {
+    char diskname[MAX_DISKNAME_LENGTH];
     Block *index;
     unsigned char bitmap[BITMAP_BYTES];
     Block *blocks[DISK_BLOCKS];
@@ -70,6 +73,7 @@ typedef struct disk {
 
 Disk *open_disk(char *diskname);
 int close_disk(Disk *disk);
+void save_disk(Disk *disk);
 
 /* NAVIGATION */
 Block *go_to_block(Disk *disk, unsigned int pointer);
