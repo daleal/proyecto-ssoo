@@ -232,6 +232,31 @@ int cr_mkdir(char *foldername)
         return 0;
     }
 
+    Block *raw = cr_folder_cd(mounted_disk, new_path);
+    DirectoryBlock *directory = get_directory_block(raw);
+
+    // Check if folder already exists
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
+            directory = get_directory_block(raw);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (subdirectory->status == (unsigned char)2) {
+            // :subdirectory corresponds to valid directory
+            if (!strcmp(subdirectory->name, filename)) {
+                // :subdirectory has the same name that we want to put to
+                // our new folder
+                free_directory_block(directory);
+                log_error("Folder already exists");
+                return 0;
+            }
+        }
+    }
+    free_directory_block(directory);
+
     // Fill father dir
     for (int i = 0; i < 32; i++) {
         subdirectory = father->directories[i];
