@@ -37,6 +37,7 @@ crFILE *cr_open(char *path, char mode)
 
     // Second give the folder path to a raw block
     Block *raw =  cr_folder_cd(mounted_disk, new_path);
+    printf("%s\n", new_path);
 
     // Variable for a conditional filename
     int exist_file_name = 0;
@@ -65,14 +66,14 @@ crFILE *cr_open(char *path, char mode)
         DirectoryBlock *block = get_directory_block(raw);
         for (int n_dir = 0; n_dir < 32; n_dir++)
         {
+            // printf("status :- %u\n", block->directories[n_dir]->status);
+            // printf("name :- %s\n", block->directories[n_dir]->name);
             if (!strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
             {
                 exist_file_name = 1;
                 // Save the number directory
                 n_directory_file_name = n_dir;
                 find_it_file_name = 1;
-                printf("%s, %s, %d\n", block->directories[n_dir]->name, filename, strcmp(block->directories[n_dir]->name, filename));
-
             }
 
 
