@@ -1,4 +1,6 @@
 #include <stdbool.h>
+#include "../constants/constants.h"
+
 
 // File structs
 typedef struct crfile crFILE;

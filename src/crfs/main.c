@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "../constants/constants.h"
 #include "../cr_API/cr_API.h"
 #include "main.h"
 

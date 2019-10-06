@@ -1,12 +1,5 @@
 #include "../constants/constants.h"
 
-#define BLOCK_SIZE 1024
-#define BITMAP_BYTES 131072
-// 1024 chars * 128 bitmap blocks = 131 072 chars of bitmap
-#define DISK_BLOCKS 1048357
-// 1048576 total blocks - 1 index block - 128 bitmap blocks
-#define TOTAL_BLOCKS 1048576
-
 
 /***************************************************
  *                     STRUCTS                     *
