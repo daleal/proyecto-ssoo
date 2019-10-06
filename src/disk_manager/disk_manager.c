@@ -479,6 +479,28 @@ void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_blo
 }
 
 
+/*
+ * The method recieves a pointer to a DirectioningBlock
+ * struct :interpreted_block and a pointer to a Block
+ * struct :raw_block and reverse-interprets :interpreted_block
+ * into :raw_block.
+ */
+void reverse_translate_directioning_block(DirectioningBlock *interpreted_block, Block *raw_block)
+{
+    int n_byte_raw_block = 0;
+    unsigned char buffer[4];
+
+    for (int pointer = 0; pointer < 256; pointer++) {
+        // Get bytes from pointer data
+        chars_from_int(buffer, &interpreted_block->pointers[pointer]);
+        for (int byte = 0; byte < 4; byte++) {
+            raw_block->data[n_byte_raw_block] = buffer[byte];
+            ++n_byte_raw_block;
+        }
+    }
+}
+
+
 
 /* BIT FIDDELING */
 
