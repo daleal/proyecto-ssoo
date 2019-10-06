@@ -409,6 +409,75 @@ void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block 
 }
 
 
+/*
+ * The method recieves a pointer to a raw Block
+ * and a pointer to a IndexBlock. This give
+ * the information of the IndexBlock to
+ * the raw Block.
+ */
+void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block){ 
+    
+    int n_byte_raw_block = 0;
+    unsigned char size_of_file[4];
+    unsigned char temporal_pointer[4];
+    unsigned char pointer_simple[4];
+    unsigned char pointer_doble[4];
+    unsigned char pointer_triple[4];
+
+    // Get size of file
+    chars_from_int(size_of_file, &interpreted_block -> size);
+
+    // Reverse size_of_file
+    for (int n_byte_size_of_file = 0; n_byte_size_of_file < 4; n_byte_size_of_file++)
+    {
+        raw_block->data[n_byte_raw_block] = size_of_file[n_byte_size_of_file];
+        n_byte_raw_block++;
+    }
+
+    for (int n_pointer = 0; n_pointer < 252; n_pointer++)
+    {
+        chars_from_int(temporal_pointer, &interpreted_block -> data_blocks[n_pointer]);
+        // Reverse pointers data in the block
+        for (int n_byte_temporal_pointer = 0; n_byte_temporal_pointer < 4; n_byte_temporal_pointer++)
+        {
+            raw_block->data[n_byte_raw_block] = temporal_pointer[n_byte_temporal_pointer];
+            n_byte_raw_block++;
+        }
+
+    }
+
+    // Get pointer simple
+    chars_from_int(pointer_simple, &interpreted_block -> simple_directioning_block);
+
+    // Reverse pointer simple
+    for (int n_byte_pointer_simple = 0; n_byte_pointer_simple < 4; n_byte_pointer_simple++)
+    {
+        raw_block->data[n_byte_raw_block] = pointer_simple[n_byte_pointer_simple];
+        n_byte_raw_block++;
+    }
+
+    // Get pointer doble
+    chars_from_int(pointer_doble, &interpreted_block -> double_directioning_block);
+
+    // Reverse pointer doble
+    for (int n_byte_pointer_doble = 0; n_byte_pointer_doble < 4; n_byte_pointer_doble++)
+    {
+        raw_block->data[n_byte_raw_block] = pointer_doble[n_byte_pointer_doble];
+        n_byte_raw_block++;
+    }
+
+    // Get pointer triple
+    chars_from_int(pointer_triple, &interpreted_block -> triple_directioning_block);
+
+    // Reverse pointer triple
+    for (int n_byte_pointer_triple = 0; n_byte_pointer_triple < 4; n_byte_pointer_triple++)
+    {
+        raw_block->data[n_byte_raw_block] = pointer_doble[n_byte_pointer_triple];
+        n_byte_raw_block++;
+    }
+}
+
+
 
 /* BIT FIDDELING */
 
