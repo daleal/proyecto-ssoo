@@ -138,10 +138,10 @@ void split_path(char *path, char *new_path, char *filename)
         }
     }
     // Get filename
-    for (int i = 0; i < strlen(path) - start_point; i++) {
+    for (int i = 0; i < total_length - start_point; i++) {
         filename[i] = path[start_point + i];
     }
-    filename[strlen(path) - start_point] = '\0';
+    filename[total_length - start_point] = '\0';
     // Check border cases
     if (!strcmp(new_path, "")) {
         strcpy(new_path, "/");
