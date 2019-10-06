@@ -73,6 +73,7 @@ typedef struct disk {
 
 Disk *open_disk(char *diskname);
 int close_disk(Disk *disk);
+void save_disk(Disk *disk);
 
 /* NAVIGATION */
 Block *go_to_block(Disk *disk, unsigned int pointer);

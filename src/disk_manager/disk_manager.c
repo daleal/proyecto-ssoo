@@ -47,9 +47,8 @@ Disk *open_disk(char *diskname)
 
 
 /*
- * Ideally, this method rewrites the disk file with
- * the new disk content (YET TO BE DONE) and then
- * frees the memory of the disk.
+ * This method rewrites the disk file with the new
+ * disk content and then frees the memory of the disk.
  * If the :disk struct poitner points to NULL, the
  * method returns 0. Otherwise, it returns 1.
  */
@@ -58,12 +57,44 @@ int close_disk(Disk *disk)
     if (disk == NULL) {
         return 0;
     }
+    save_disk(disk);
+    free_disk(disk);
+    return 1;
+}
+
+
+/*
+ * This method rewrites the disk file with the new
+ * disk content.
+ */
+void save_disk(Disk *disk)
+{
+    FILE *raw;
+    raw = fopen(disk->diskname, "wb");
+
+    // Write the index
+    fwrite(disk->index, sizeof(unsigned char), BLOCK_SIZE, raw);
+
+    // Write the bitmap
+    fwrite(disk->bitmap, sizeof(unsigned char), BITMAP_BYTES, raw);
+
+    // Write the rest of the blocks
+    for (int i = 0; i < DISK_BLOCKS; i++) {
+        fwrite(disk->blocks[i]->data, sizeof(unsigned char), BLOCK_SIZE, raw);
+    }
+}
+
+
+/*
+ * This method frees the memory of the disk.
+ */
+void free_disk(Disk *disk)
+{
     for (int i = 0; i < DISK_BLOCKS; i++) {
         free(disk->blocks[i]);
     }
     free(disk->index);
     free(disk);
-    return 1;
 }
 
 
