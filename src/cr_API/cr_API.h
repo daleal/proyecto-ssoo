@@ -20,3 +20,8 @@ void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
+
+/* AUXILIARY METHODS */
+int unload_file(char *destination, char *location, char *file_name);
+int unload_folder(char *destination, char *location, char *folder_name);
+void recursive_unload(char *orig, char *dest);
