@@ -21,3 +21,5 @@ void cr_bitmap(unsigned block, bool hex);
 int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
+
+unsigned char *get_file_byte(crFILE *file_desc, unsigned long position);
