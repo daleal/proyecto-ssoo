@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "../constants/constants.h"
 
 
 Block *cr_cd(Disk *disk, char *path);

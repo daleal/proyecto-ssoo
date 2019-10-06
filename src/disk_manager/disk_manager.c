@@ -82,6 +82,8 @@ void save_disk(Disk *disk)
     for (int i = 0; i < DISK_BLOCKS; i++) {
         fwrite(disk->blocks[i]->data, sizeof(unsigned char), BLOCK_SIZE, raw);
     }
+
+    fclose(raw);
 }
 
 
