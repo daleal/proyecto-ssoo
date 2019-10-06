@@ -17,8 +17,32 @@ Disk *mounted_disk = NULL;
 // File management functions
 crFILE *cr_open(char *path, char mode)
 {
-    crFILE *file_desc = malloc(sizeof(crFILE));
-    return file_desc;
+    Block *raw1 = go_to_block(mounted_disk, 0);
+    DirectoryBlock *dir = get_directory_block(raw1);
+    for (int i = 0; i < 32; i++) {
+        printf(
+            "%u - %s - %u\n",
+            dir->directories[i]->status,
+            dir->directories[i]->name,
+            dir->directories[i]->file_pointer
+        );
+    }
+
+    Block *raw = go_to_block(mounted_disk, 445196);
+    IndexBlock *index = get_index_block(raw);
+    FILE *raw_file;
+    crFILE *file = malloc(sizeof(crFILE));
+    file->index = index;
+    file->reader = (unsigned long)0;
+
+    unsigned char buffer[index->size];
+    printf("voy a leer\n");
+    printf("%d \n index size", index->size);
+    cr_read(file, buffer, index->size);
+    printf("termine de leer\n");
+    raw_file = fopen("Withered Leaf.mp3", "wb");
+    fwrite(buffer, sizeof(unsigned char), index->size, raw_file);
+    fclose(raw_file);
 }
 
 
@@ -32,7 +56,7 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
     }
     else total = nbytes;
 
-    unsigned char save[total];
+    unsigned char *save = buffer;
     int data = BLOCK_SIZE * 252;
     int simple = BLOCK_SIZE * NUM_POINTERS + data;
     int doublex = BLOCK_SIZE * pow(NUM_POINTERS, 2) + simple;
@@ -54,7 +78,7 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
     int index_double = 0;
     int index_triple = 0;
 
-
+    printf(" reader%d\n", file_desc->reader);
 
     if (file_desc->reader < data){
         index_data = min(data - file_desc->reader, total);
@@ -69,10 +93,13 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
             save[i] = block->data[get_index(file_desc->reader + i, 0)];
         }
         file_desc->reader = file_desc->reader + index_data;
+            printf(" reader%d\n", file_desc->reader);
+
     } 
 
-    if ((data < file_desc->reader) && (file_desc->reader < simple))
+    if ((data <= file_desc->reader) && (file_desc->reader < simple))
     {
+        printf("en simple\n");
         index_simple = min(simple - file_desc->reader, total - index_data);
         
         block = go_to_block(mounted_disk, file_desc->index->simple_directioning_block);
@@ -85,15 +112,17 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
                 actual = directioning_to_block(file_desc->reader + i, 1, 1);
                 data_block = go_to_block(mounted_disk, directioning->pointers[actual]);
             }
-
-            save[i] = data_block->data[get_index(i + file_desc->reader, 1)];
+            
+            save[i + index_data] = data_block->data[get_index(i + file_desc->reader, 1)];
         }
+        printf(" reader%d\n", file_desc->reader);
         file_desc->reader = file_desc->reader + index_simple;   
     }
-
-    if ((simple < file_desc->reader) && (file_desc->reader < doublex)){
-        index_double = min(doublex - file_desc->reader, total - index_simple);
-        
+    printf(" reader%d\n", file_desc->reader);
+    if ((simple <= file_desc->reader) && (file_desc->reader < doublex)){
+        index_double = min(doublex - file_desc->reader, total - index_simple - index_data);
+        printf("a es %d - b es %d\n", doublex - file_desc->reader, total - index_simple - index_data);
+        printf("%d\n", index_double);
         block = go_to_block(mounted_disk, file_desc->index->double_directioning_block);
         directioning_double = get_directioning_block(block);
         actual_pointer = directioning_to_block(file_desc->reader, 2, 2);
@@ -101,23 +130,22 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
         directioning = get_directioning_block(simple_block);
         actual = directioning_to_block(file_desc->reader, 2, 1);
         data_block = go_to_block(mounted_disk, directioning->pointers[actual]);
-
         for (int i = 0; i < index_double; i++){
-            if ((i + file_desc->reader)%BLOCK_SIZE == 0){
+            if ((i + file_desc->reader)%BLOCK_SIZE == 0 && (i + file_desc->reader) < index_double){
                 actual_pointer = directioning_to_block(file_desc->reader + i, 2, 2);
                 simple_block = go_to_block(mounted_disk, directioning_double->pointers[actual_pointer]);
                 directioning = get_directioning_block(simple_block);
                 actual = directioning_to_block(file_desc->reader + i, 2, 1);
                 data_block = go_to_block(mounted_disk, directioning->pointers[actual]);
             }
-            save[i] = data_block->data[get_index(i + file_desc->reader, 2)];
+            save[i + index_simple] = data_block->data[(file_desc->reader + i)%1024];
+            //get_index(i + file_desc->reader, 2)
         }
         file_desc->reader = file_desc->reader + index_double;
-        
     }
 
-    if ((doublex < file_desc->reader) && (file_desc->reader < triple)){
-        index_triple = min(triple - file_desc->reader, total - index_double);
+    if ((doublex <= file_desc->reader) && (file_desc->reader < triple)){
+        index_triple = min(triple - file_desc->reader, total - index_double - index_simple - index_data);
         
         block = go_to_block(mounted_disk, file_desc->index->triple_directioning_block);
         directioning_triple = get_directioning_block(block);
@@ -146,11 +174,12 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
                 data_block = go_to_block(mounted_disk, directioning->pointers[actual]);
             }
         
-            save[i] = data_block->data[get_index(i + file_desc->reader, 3)];
+            save[i + index_double] = data_block->data[get_index(i + file_desc->reader, 3)];
         }
         file_desc->reader = file_desc->reader + index_triple;
     }
-    printf("%s\n",save);
+    printf("reader %d\n", file_desc->reader);
+        printf("%s\n", save);
     //*buffer = save;
     return total;
 }
@@ -371,7 +400,7 @@ int directioning_to_block(int reader, int mode, int pointer)
         return (reader - (252*1024)) / BLOCK_SIZE;
     }
     if(mode == 2){
-        if (pointer == 2) return (reader - (256*BLOCK_SIZE + 252*BLOCK_SIZE) / BLOCK_SIZE) / 256; //dentro de los simples
+        if (pointer == 2) return ((reader - (256*BLOCK_SIZE + 252*BLOCK_SIZE)) / BLOCK_SIZE) / 256; //dentro de los simples
         return (reader - (256*BLOCK_SIZE + 252*BLOCK_SIZE) / BLOCK_SIZE) % 256; //dentro de los bloques
     }
     if (mode == 3){
