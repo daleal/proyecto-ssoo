@@ -49,9 +49,6 @@ crFILE *cr_open(char *path, char mode)
     // Variable for write mode, save the number of a invalid directory
     int n_directory_invalid;
 
-    // Variable for write mode, save the number of a continuation directory
-    unsigned int pointer_continuation;
-
     // Variable for write mode, use for save the pointer for create new index
     // block and the index block
     unsigned int extension_pointer;
@@ -68,12 +65,14 @@ crFILE *cr_open(char *path, char mode)
         DirectoryBlock *block = get_directory_block(raw);
         for (int n_dir = 0; n_dir < 32; n_dir++)
         {
-            if (strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
+            if (!strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
             {
                 exist_file_name = 1;
                 // Save the number directory
                 n_directory_file_name = n_dir;
                 find_it_file_name = 1;
+                printf("%s, %s, %d\n", block->directories[n_dir]->name, filename, strcmp(block->directories[n_dir]->name, filename));
+
             }
 
 
@@ -482,4 +481,9 @@ int cr_mkdir(char *foldername)
     free_directory_block(father);
 
     return 1;
+}
+
+void test_cr_open(crFILE *file_desc)
+{
+    printf("size :- %d\n", file_desc->index->size);
 }
