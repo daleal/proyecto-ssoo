@@ -242,12 +242,12 @@ int cr_mkdir(char *foldername);
 
 ### Description
 
-Function description
+Creates a folder in `foldername` if the complete path up to the last `/` exists.
 
 ### Return Value and Error Handling
 
-Describe return value
+The function returns `1` if it succeeds. If the path up to the last `/` does not exist, it logs a message to `stderr` and returns `0`. If a folder with the same name in the same path exists, it logs a message to `stderr` and returns `0`. If the disk has no space left, it logs a message to `stderr` and returns `0`. If no disk is mounted, it logs a message to `stderr` and returns `0`.
 
 ### Notes
 
-Aditional notes about the function
+Paths like `/dir1/dir2/` will be pre-processed to be `/dir1/dir2` and then created.
