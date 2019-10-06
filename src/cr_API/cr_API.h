@@ -1,4 +1,7 @@
 #include <stdbool.h>
+#include "../disk_manager/disk_manager.h"
+#include "../internal_cr_API/internal_cr_API.h"
+
 
 
 
@@ -26,6 +29,7 @@ void cr_ls(char *path);
 int cr_mkdir(char *foldername);
 
 //Auxiliary functions
+int min(int a, int b);
 int reader_to_block(int reader);
 int directioning_to_block(int reader, int mode, int pointer);
 int get_index(int reader, int mode);
