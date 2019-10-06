@@ -74,6 +74,7 @@ typedef struct disk {
 Disk *open_disk(char *diskname);
 int close_disk(Disk *disk);
 void save_disk(Disk *disk);
+void free_disk(Disk *disk);
 
 /* NAVIGATION */
 Block *go_to_block(Disk *disk, unsigned int pointer);
@@ -88,6 +89,7 @@ void free_directioning_block(DirectioningBlock *block);
 /* BLOCK REVERSE TRANSLATE */
 void reverse_translate_directory_block(DirectoryBlock *interpreted_block, Block *raw_block);
 void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block);
+void reverse_translate_directioning_block(DirectioningBlock *interpreted_block, Block *raw_block);
 
 /* BITMAP MANAGEMENT */
 int bit_from_bitmap(Disk *disk, int position);

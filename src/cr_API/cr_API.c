@@ -291,7 +291,7 @@ int cr_mkdir(char *foldername)
             subdirectory->file_pointer = new_dir_pointer;
 
             // Translate father block to raw block
-            reverse_translate_block_directory(father, raw_father);
+            reverse_translate_directory_block(father, raw_father);
             break;
         }
     }
