@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "../error_handler/error_handler.h"
 #include "../disk_manager/disk_manager.h"
@@ -107,7 +109,59 @@ int cr_rm(char *path)
 
 int cr_unload(char *orig, char *dest)
 {
-    return 0;
+    bool exists = false;
+    char orig_path[strlen(orig) + 1];
+    char filename[strlen(orig) + 1];
+    Block *actual_raw_folder;
+    DirectoryBlock *actual_folder;
+    DirectoryEntry *subdirectory;
+    split_path(orig, orig_path, filename);
+    actual_raw_folder = cr_folder_cd(mounted_disk, orig_path);
+    // Check if destination exists
+    struct stat st = {0};
+    if (stat(dest, &st) == -1) {
+        log_error("Invalid destination folder");
+        return 0;
+    }
+
+    actual_folder = get_directory_block(actual_raw_folder);
+
+    // Check if virtual dir exists
+    if (actual_folder == NULL) {
+        log_error("Invalid virtual origin");
+        return 0;
+    }
+
+    for (int i = 0; i < 32; i++) {
+        subdirectory = actual_folder->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            actual_raw_folder = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(actual_folder);
+            actual_folder = get_directory_block(actual_raw_folder);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (
+            (subdirectory->status == (unsigned char)2) ||  // Directory
+            (subdirectory->status == (unsigned char)4)) {  // File
+            // :subdirectory corresponds to valid entry
+            if (!strcmp(subdirectory->name, filename)) {
+                // :subdirectory corresponds to the file we were looking for
+                exists = true;
+                break;
+            }
+        }
+    }
+
+    free_directory_block(actual_folder);
+
+    if (!exists) {
+        log_error("Invalid virtual origin");
+        return 0;
+    }
+
+    recursive_unload(orig, dest);
+
+    return 1;
 }
 
 
@@ -206,9 +260,9 @@ int cr_exists(char *path)
             directory = get_directory_block(raw);  // Get continuation
             i = -1;  // So the loop starts over with the continuation
         } else if (
-            (subdirectory->status == (unsigned char)2) |    // Directory
-            (subdirectory->status == (unsigned char)4) |    // File
-            (subdirectory->status == (unsigned char)8) |    // Same Dir
+            (subdirectory->status == (unsigned char)2) ||    // Directory
+            (subdirectory->status == (unsigned char)4) ||    // File
+            (subdirectory->status == (unsigned char)8) ||    // Same Dir
             (subdirectory->status == (unsigned char)16)) {  // Father Dir
             // :subdirectory corresponds to valid entry
             if (!strcmp(subdirectory->name, filename)) {
@@ -245,9 +299,9 @@ void cr_ls(char *path)
             directory = get_directory_block(raw);  // Get continuation
             i = -1;  // So the loop starts over with the continuation
         } else if (
-            (subdirectory->status == (unsigned char)2) |    // Directory
-            (subdirectory->status == (unsigned char)4) |    // File
-            (subdirectory->status == (unsigned char)8) |    // Same Dir
+            (subdirectory->status == (unsigned char)2) ||    // Directory
+            (subdirectory->status == (unsigned char)4) ||    // File
+            (subdirectory->status == (unsigned char)8) ||    // Same Dir
             (subdirectory->status == (unsigned char)16)) {  // Father Dir
             // :subdirectory corresponds to valid entry
             printf("%s\n", subdirectory->name);
@@ -315,7 +369,7 @@ int cr_mkdir(char *foldername)
     // Fill father dir
     for (int i = 0; i < 32; i++) {
         subdirectory = father->directories[i];
-        if ((subdirectory->status != (unsigned char)32) & (i == 31)) {
+        if ((subdirectory->status != (unsigned char)32) && (i == 31)) {
             // Could not find empty entry and there are no more entries
             unsigned int extension_pointer;
             if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
@@ -328,7 +382,7 @@ int cr_mkdir(char *foldername)
             subdirectory->status = (unsigned char)32;
             subdirectory->file_pointer = extension_pointer;
             i = -1;  // So the loop starts over with the continuation
-        } else if ((subdirectory->status == (unsigned char)32) & (i != 0)) {
+        } else if ((subdirectory->status == (unsigned char)32) && (i != 0)) {
             // :subdirectory is the continuation of :father
             actual_pointer = subdirectory->file_pointer;
             raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
@@ -336,9 +390,9 @@ int cr_mkdir(char *foldername)
             father = get_directory_block(raw_father);  // Get continuation
             i = -1;  // So the loop starts over with the continuation
         } else if (
-            (subdirectory->status != (unsigned char)2) &    // Directory
-            (subdirectory->status != (unsigned char)4) &    // File
-            (subdirectory->status != (unsigned char)8) &    // Same Dir
+            (subdirectory->status != (unsigned char)2) &&    // Directory
+            (subdirectory->status != (unsigned char)4) &&    // File
+            (subdirectory->status != (unsigned char)8) &&    // Same Dir
             (subdirectory->status != (unsigned char)16)) {  // Father Dir
             // :subdirectory corresponds to invalid entry
             subdirectory->status = (unsigned char)2;
@@ -443,13 +497,13 @@ unsigned char *get_file_byte(crFILE *file_desc, unsigned long position)
  * by :file_entry to the real filesystem
  * inside :destination.
  */
-int unload_file(char *destination, char *location, DirectoryEntry *file_entry)
+int unload_file(char *destination, char *location, char *file_name)
 {
     char full_path[strlen(destination) + 27 + 2];
-    sprintf(full_path, "%s/%s", destination, file_entry->name);
+    sprintf(full_path, "%s/%s", destination, file_name);
 
     char virtual_path[strlen(location) + 27 + 2];
-    sprintf(virtual_path, "%s/%s", location, file_entry->name);
+    sprintf(virtual_path, "%s/%s", location, file_name);
 
     if (access(full_path, F_OK) != -1) {
         // File already exists
@@ -478,6 +532,8 @@ int unload_file(char *destination, char *location, DirectoryEntry *file_entry)
     // Close files
     cr_close(reading_file);
     fclose(writing_file);
+
+    return 1;
 }
 
 
@@ -488,39 +544,64 @@ int unload_file(char *destination, char *location, DirectoryEntry *file_entry)
  * by :folder_entry to the real filesystem
  * inside :destination.
  */
-int unload_folder(char *destination, char *location, DirectoryEntry *folder_entry)
+int unload_folder(char *destination, char *location, char *file_name)
 {
     char full_path[strlen(destination) + 27 + 2];
-    sprintf(full_path, "%s/%s", destination, folder_entry->name);
+    sprintf(full_path, "%s/%s", destination, file_name);
 
     char virtual_path[strlen(location) + 27 + 2];
-    sprintf(virtual_path, "%s/%s", location, folder_entry->name);
+    sprintf(virtual_path, "%s/%s", location, file_name);
 
-    if (access(full_path, F_OK) != -1) {
-        // File already exists
+    // Struct stat
+    struct stat st = {0};
+
+    if (stat(full_path, &st) != -1) {
+        // Directory already exists
         // char log[256 + strlen(full_path)];
-        // sprintf(log, "Could not unload file. File %s already exists", full_path);
+        // sprintf(log, "Could not unload directory. Directory %s already exists", full_path);
         // log_error(log);
         return 0;
     }
 
-    // Open files
-    crFILE *reading_file = cr_open(virtual_path, 'r');
-    FILE *writing_file = fopen(full_path, "wb");
-
-    if (reading_file == NULL) {
-        // Virtual file does not exist
+    if (mkdir(full_path, S_IRWXU) == -1) {
+        // Failed to create the directory
         return -1;
     }
 
-    // Get file data in the buffer
-    unsigned char buffer[reading_file->index->size];
-    cr_read(reading_file, buffer, reading_file->index->size);
+    return 1;
+}
 
-    // Write data in real file
-    fwrite(buffer, sizeof(unsigned char), reading_file->index->size, writing_file);
 
-    // Close files
-    cr_close(reading_file);
-    fclose(writing_file);
+void recursive_unload(char *orig, char *dest)
+{
+    char orig_path[strlen(orig) + 1];
+    char filename[strlen(orig) + 1];
+    Block *actual_raw_folder;
+    DirectoryBlock *actual_folder;
+    DirectoryEntry *subdirectory;
+    split_path(orig, orig_path, filename);
+    actual_raw_folder = cr_folder_cd(mounted_disk, orig_path);
+    actual_folder = get_directory_block(actual_raw_folder);
+    for (int i = 0; i < 32; i++) {
+        subdirectory = actual_folder->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            actual_raw_folder = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(actual_folder);
+            actual_folder = get_directory_block(actual_raw_folder);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (subdirectory->status == (unsigned char)2) {  // Directory
+            // Dir to copy
+            unload_folder(dest, orig_path, subdirectory->name);
+            char new_orig[strlen(orig) + 27 + 1];
+            char new_dest[strlen(dest) + 27 + 1];
+            sprintf(new_orig, "%s/%s", orig, subdirectory->name);
+            sprintf(new_dest, "%s/%s", dest, subdirectory->name);
+            recursive_unload(new_orig, new_dest);
+        } else if (subdirectory->status == (unsigned char)4) {  // File
+            // File to copy
+            unload_file(dest, orig_path, subdirectory->name);
+        }
+    }
+    free_directory_block(actual_folder);
 }
