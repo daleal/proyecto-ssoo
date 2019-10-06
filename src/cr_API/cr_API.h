@@ -22,4 +22,8 @@ int cr_exists(char *path);
 void cr_ls(char *path);
 int cr_mkdir(char *foldername);
 
+/* AUXILIARY METHODS */
 unsigned char *get_file_byte(crFILE *file_desc, unsigned long position);
+int unload_file(char *destination, char *location, char *file_name);
+int unload_folder(char *destination, char *location, char *folder_name);
+void recursive_unload(char *orig, char *dest);
