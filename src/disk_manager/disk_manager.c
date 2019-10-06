@@ -376,8 +376,8 @@ int free_blocks(Disk *disk)
  * the information of the DirectoryBlock to
  * the raw Block.
  */
-void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block){ 
-    
+void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block){
+
     int n_byte_raw_block = 0;
     unsigned char index_block_pointer[4];
 
@@ -396,16 +396,16 @@ void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block 
 
         // Get index block
         chars_from_int(index_block_pointer, &interpreted_block -> directories[n_dir]->file_pointer);
-        
+
         // Reverse index block pointer
         for (int n_byte_block_pointer = 0; n_byte_block_pointer < 4; n_byte_block_pointer++)
         {
             raw_block->data[n_byte_raw_block] = index_block_pointer[n_byte_block_pointer];
             n_byte_raw_block++;
         }
-        
+
     }
-    
+
 }
 
 
@@ -496,4 +496,89 @@ unsigned int get_directory_pointer(Disk *disk, DirectoryBlock *dir)
         }
     }
     return 0;
+}
+
+
+/*
+ * The method recieves a Disk struct :disk and
+ * an unsigned int :father_pointer, and create
+ * an empty directory block with pointers to itself
+ * an to its father as the first two directory
+ * entries. All ather entries are rendered invalid.
+ * If the disk fails to find an empty block, the
+ * method returns 0. Otherwise, it returns an
+ * unsigned int pointer to itself.
+ */
+unsigned int new_directory_block(Disk *disk, unsigned int father_pointer)
+{
+    unsigned int new_dir_pointer;
+    if (!(new_dir_pointer = get_free_block_number(disk))) {
+        return 0;
+    }
+
+    Block *raw_dir;
+    DirectoryBlock *new_dir = malloc(sizeof(DirectoryBlock));
+
+    // Father Directory entry
+    new_dir->directories[0] = malloc(sizeof(DirectoryEntry));
+    new_dir->directories[0]->status = (unsigned char)16;
+    new_dir->directories[0]->file_pointer = father_pointer;
+    fill_directory_name(new_dir->directories[0]->name, "..");
+
+    // Self Directory entry
+    new_dir->directories[1] = malloc(sizeof(DirectoryEntry));
+    new_dir->directories[1]->status = (unsigned char)8;
+    new_dir->directories[1]->file_pointer = new_dir_pointer;
+    fill_directory_name(new_dir->directories[1]->name, ".");
+
+    // Invalid Directories entries
+    for (int i = 2; i < 32; i++) {
+        new_dir->directories[i] = malloc(sizeof(DirectoryEntry));
+        new_dir->directories[i]->status = (unsigned char)1;
+    }
+
+    // Translate dir block to raw block
+    raw_dir = go_to_block(disk, new_dir_pointer);
+    reverse_translate_block_directory(new_dir, raw_dir);
+
+    free_directory_block(new_dir);
+
+    return new_dir_pointer;
+}
+
+
+/*
+ * The method recieves a Disk struct :disk and
+ * an unsigned int :block_pointer, and create
+ * an empty directory extension block with a pointer
+ * to the previous directory block in the chain of
+ * that specific directory. All ather entries are
+ * rendered invalid. If the disk fails to find an
+ * empty block, the method returns 0. Otherwise,
+ * it returns an unsigned int pointer to itself.
+ */
+unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
+{
+    unsigned int new_dir_pointer;
+    if (!(new_dir_pointer = new_directory_block(disk, block_pointer))) {
+        return 0;
+    }
+
+    Block *raw_dir = go_to_block(disk, new_dir_pointer);
+    DirectoryBlock *new_dir = get_directory_block(raw_dir);
+
+    // Father Directory entry
+    new_dir->directories[0]->status = (unsigned char)32;
+    fill_directory_name(new_dir->directories[0]->name, ".");
+
+    // Self Directory entry to Invalid Directory entry
+    new_dir->directories[1]->status = (unsigned char)1;
+
+    // Translate dir block to raw block
+    raw_dir = go_to_block(disk, new_dir_pointer);
+    reverse_translate_block_directory(new_dir, raw_dir);
+
+    free_directory_block(new_dir);
+
+    return new_dir_pointer;
 }

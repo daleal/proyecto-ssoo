@@ -213,6 +213,7 @@ int cr_mkdir(char *foldername)
     Block *raw_father;
     DirectoryBlock *father;
     unsigned int father_pointer;
+    unsigned int actual_pointer;
     unsigned int new_dir_pointer;
     DirectoryEntry *subdirectory;
     split_path(foldername, new_path, filename);
@@ -223,7 +224,10 @@ int cr_mkdir(char *foldername)
     }
     father = get_directory_block(raw_father);
     father_pointer = get_directory_pointer(mounted_disk, father);
-    if (!(new_dir_pointer = get_free_block_number(mounted_disk))) {
+    actual_pointer = father_pointer;
+
+    // Create new dir
+    if (!(new_dir_pointer = new_directory_block(mounted_disk, father_pointer))) {
         log_error("No disk space left");
         return 0;
     }
@@ -231,8 +235,22 @@ int cr_mkdir(char *foldername)
     // Fill father dir
     for (int i = 0; i < 32; i++) {
         subdirectory = father->directories[i];
-        if ((subdirectory->status == (unsigned char)32) & (i != 0)) {
+        if ((subdirectory->status != (unsigned char)32) & (i == 31)) {
+            // Could not find empty entry and there are no more entries
+            unsigned int extension_pointer;
+            if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+                log_error("No disk space left");
+                if (!turn_bitmap_bit_to_zero(mounted_disk, new_dir_pointer)) {
+                    log_error("Could not free unused block. Drive might be malfunctioning");
+                }
+                return 0;
+            }
+            subdirectory->status = (unsigned char)32;
+            subdirectory->file_pointer = extension_pointer;
+            i = -1;  // So the loop starts over with the continuation
+        } else if ((subdirectory->status == (unsigned char)32) & (i != 0)) {
             // :subdirectory is the continuation of :father
+            actual_pointer = subdirectory->file_pointer;
             raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
             free_directory_block(father);
             father = get_directory_block(raw_father);  // Get continuation
@@ -249,30 +267,20 @@ int cr_mkdir(char *foldername)
             break;
         }
     }
-
-    // Fill new dir
-    DirectoryBlock *new_dir = malloc(sizeof(DirectoryBlock));
-
-    // Father Directory entry
-    new_dir->directories[0] = malloc(sizeof(DirectoryEntry));
-    new_dir->directories[0]->status = (unsigned char)16;
-    new_dir->directories[0]->file_pointer = father_pointer;
-    fill_directory_name(new_dir->directories[0]->name, "..");
-
-    // Self Directory entry
-    new_dir->directories[1] = malloc(sizeof(DirectoryEntry));
-    new_dir->directories[1]->status = (unsigned char)8;
-    new_dir->directories[1]->file_pointer = new_dir_pointer;
-    fill_directory_name(new_dir->directories[1]->name, ".");
-
-    // Invalid Directories entries
-    for (int i = 2; i < 32; i++) {
-        new_dir->directories[i] = malloc(sizeof(DirectoryEntry));
-        new_dir->directories[i]->status = (unsigned char)1;
+    // Translate father block to raw block
+    raw_father = go_to_block(mounted_disk, father_pointer);
+    free_directory_block(father);
+    father = get_directory_block(raw_father);
+    reverse_translate_block_directory(father, raw_father);
+    // Translate continuation blocks to raw blocks
+    while (father->directories[31]->status == (unsigned char)32) {
+        raw_father = go_to_block(mounted_disk, father->directories[31]->file_pointer);
+        free_directory_block(father);
+        father = get_directory_block(raw_father);
+        reverse_translate_block_directory(father, raw_father);
     }
 
-    /* TEMPORARY CLEAN */
-    free_directory_block(new_dir);
+    free_directory_block(father);
 
     return 1;
 }
