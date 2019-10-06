@@ -93,8 +93,13 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
 
 int cr_close(crFILE *file_desc)
 {
+    if (file_desc == NULL){
+        return 0;
+    }
+
+    free(file_desc->index);
     free(file_desc);
-    return 0;
+    return 1;
 }
 
 

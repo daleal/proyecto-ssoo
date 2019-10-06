@@ -34,11 +34,14 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes);
 
 ### Description
 
-Function description
+Read `file_desc` from the last read byte (`file_desc->reader`), until the next `nbytes`. 
 
 ### Return Value and Error Handling
 
-Describe return value
+Returns the number of bytes read. If `nbytes` plus the numbers of bytes read to the moment is less than the total size of the file, returns exactly `nbytes`. In the other case returns  `nbytes` less the numbers of bytes unread.
+
+If the pointer to `crFILE` is `NULL` returns `-1`.
+
 
 ### Notes
 
@@ -58,7 +61,7 @@ Function description
 
 ### Return Value and Error Handling
 
-Describe return value
+If `crFILE` es a `NULL` pointer, returns `-1`.
 
 ### Notes
 
@@ -74,11 +77,11 @@ int cr_close(crFILE *file_desc);
 
 ### Description
 
-Function description
+Closes the file saved on `file_desc` and frees its memory.
 
 ### Return Value and Error Handling
 
-Describe return value
+This function returns `1` if the pointer to `crFILE` is `NULL`. `0` in other case.
 
 ### Notes
 
@@ -118,7 +121,9 @@ Function description
 
 ### Return Value and Error Handling
 
-Describe return value
+The function returns `1`.  
+If `dest` belongs to a non-existent destination in the computer it returns `0`.
+If `orig` belongs to a non-existent virtual destination it returns `0`.
 
 ### Notes
 
