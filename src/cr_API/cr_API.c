@@ -9,10 +9,10 @@
 
 
 // File structs
-typedef struct crfile{
+struct crfile {
     IndexBlock *index;
-    int reader;
-} crFILE;
+    unsigned long reader;
+};
 
 
 Disk *mounted_disk = NULL;
@@ -51,6 +51,11 @@ crFILE *cr_open(char *path, char mode)
 
     // Variable for write mode, save the number of a continuation directory
     unsigned int pointer_continuation;
+
+    // Variable for write mode, use for save the pointer for create new index
+    // block and the index block
+    unsigned int extension_pointer;
+    unsigned int new_index_block_pointer;
 
     // Condition in case not found the folder path
     if (raw == NULL)
@@ -111,6 +116,7 @@ crFILE *cr_open(char *path, char mode)
                 // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
                 file_desc -> index = get_index_block(raw_index_file);
+                file_desc -> reader = 0;
             }
             else
             {
@@ -130,16 +136,27 @@ crFILE *cr_open(char *path, char mode)
                 if (n_directory_invalid != -1)
                 {
                     unsigned int file_pointer = block->directories[n_directory_invalid]->file_pointer;
+                    // Create the new index block for the file
+                    if (!(new_index_block_pointer = new_index_block(mounted_disk))) {
+                        log_error("No disk space left");
+                        return NULL;
+                    }
+                    // Set the invalid entry like a valid one
+                    // Rembember n_directory_invalid have number
+                    // of a invalid directory, make it valid
+                    block->directories[n_directory_invalid]->status = (unsigned char)2;
+                    fill_directory_name(block->directories[n_directory_invalid]->name, filename);
+                    block->directories[n_directory_invalid]->file_pointer = file_pointer;
+
                     // Go to the index block of the file and give to cr_FILE
                     Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
                     file_desc -> index = get_index_block(raw_index_file);
+                    file_desc -> reader = 0;
                 }
                 // Extension of the directory block
                 else
                 {
                     unsigned int actual_pointer =  get_directory_pointer(mounted_disk, block);
-                    unsigned int extension_pointer;
-                    unsigned int new_index_block_pointer;
                     // Create the extension
                     if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
                         log_error("No disk space left");
@@ -162,9 +179,10 @@ crFILE *cr_open(char *path, char mode)
                     block->directories[1]->status = (unsigned char)2;
                     fill_directory_name(block->directories[1]->name, filename);
                     block->directories[1]->file_pointer = new_index_block_pointer;
-                    file_desc -> index = new_index_block_pointer;
-
-
+                     // Go to the index block of the file and give to cr_FILE
+                    Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
+                    file_desc -> index = get_index_block(raw_index_file);
+                    file_desc -> reader = 0;
 
                 }
                 
@@ -173,17 +191,9 @@ crFILE *cr_open(char *path, char mode)
         {
             log_error("No exist that mode for this method.");
             return NULL;
-        }
-        
-        
-        
+        } 
 
-
-        
-        
     }
-    
-
 
     return file_desc;
 }
