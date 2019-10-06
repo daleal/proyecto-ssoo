@@ -296,13 +296,13 @@ int cr_mkdir(char *foldername)
     raw_father = go_to_block(mounted_disk, father_pointer);
     free_directory_block(father);
     father = get_directory_block(raw_father);
-    reverse_translate_block_directory(father, raw_father);
+    reverse_translate_directory_block(father, raw_father);
     // Translate continuation blocks to raw blocks
     while (father->directories[31]->status == (unsigned char)32) {
         raw_father = go_to_block(mounted_disk, father->directories[31]->file_pointer);
         free_directory_block(father);
         father = get_directory_block(raw_father);
-        reverse_translate_block_directory(father, raw_father);
+        reverse_translate_directory_block(father, raw_father);
     }
 
     free_directory_block(father);

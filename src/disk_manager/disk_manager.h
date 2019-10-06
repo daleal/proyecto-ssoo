@@ -82,7 +82,7 @@ DirectioningBlock *get_directioning_block(Block *block);
 void free_directioning_block(DirectioningBlock *block);
 
 /* BLOCK REVERSE TRANSLATE */
-void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block);
+void reverse_translate_directory_block(DirectoryBlock *interpreted_block, Block *raw_block);
 void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block);
 
 /* BITMAP MANAGEMENT */

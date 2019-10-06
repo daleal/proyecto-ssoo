@@ -376,7 +376,8 @@ int free_blocks(Disk *disk)
  * the information of the DirectoryBlock to
  * the raw Block.
  */
-void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block *raw_block){
+void reverse_translate_directory_block(DirectoryBlock *interpreted_block, Block *raw_block)
+{
 
     int n_byte_raw_block = 0;
     unsigned char index_block_pointer[4];
@@ -415,8 +416,8 @@ void reverse_translate_block_directory(DirectoryBlock *interpreted_block, Block 
  * the information of the IndexBlock to
  * the raw Block.
  */
-void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block){ 
-    
+void reverse_translate_index_block(IndexBlock *interpreted_block, Block *raw_block)
+{
     int n_byte_raw_block = 0;
     unsigned char size_of_file[4];
     unsigned char temporal_pointer[4];
@@ -608,7 +609,7 @@ unsigned int new_directory_block(Disk *disk, unsigned int father_pointer)
 
     // Translate dir block to raw block
     raw_dir = go_to_block(disk, new_dir_pointer);
-    reverse_translate_block_directory(new_dir, raw_dir);
+    reverse_translate_directory_block(new_dir, raw_dir);
 
     free_directory_block(new_dir);
 
@@ -645,7 +646,7 @@ unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
 
     // Translate dir block to raw block
     raw_dir = go_to_block(disk, new_dir_pointer);
-    reverse_translate_block_directory(new_dir, raw_dir);
+    reverse_translate_directory_block(new_dir, raw_dir);
 
     free_directory_block(new_dir);
 
