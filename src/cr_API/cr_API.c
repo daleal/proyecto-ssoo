@@ -360,7 +360,22 @@ int cr_unload(char *orig, char *dest)
 
 int cr_load(char *orig)
 {
-    return 0;
+    struct stat st;
+    if (stat(orig, &st) == -1) {
+        log_error("Invalid path");
+        return 0;
+    }
+    char orig_path[strlen(orig) + 1];
+    char filename[strlen(orig) + 1];
+    split_path(orig, orig_path, filename);
+    if (S_ISDIR(st.st_mode)) {
+        // Directory
+        load_folder("/", orig_path, filename);
+    } else {
+        // File
+        load_file("/", orig_path, filename);
+    }
+    return 1;
 }
 
 
