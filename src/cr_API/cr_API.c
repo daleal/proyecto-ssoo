@@ -112,7 +112,7 @@ crFILE *cr_open(char *path, char mode)
             {
                 unsigned int actual_pointer =  get_directory_pointer(mounted_disk, block);
                 // Create the extension
-                if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+                if (!(extension_pointer = create_directory_extension(mounted_disk))) {
                     log_error("No disk space left");
                     return NULL;
                 }
@@ -197,6 +197,7 @@ crFILE *cr_open(char *path, char mode)
             Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
             file_desc -> index = get_index_block(raw_index_file);
             file_desc -> reader = 0;
+            file_desc -> reading = 1;
         }
         else
         {
@@ -224,15 +225,20 @@ crFILE *cr_open(char *path, char mode)
                 // Set the invalid entry like a valid one
                 // Rembember n_directory_invalid have number
                 // of a invalid directory, make it valid
-                block->directories[n_directory_invalid]->status = (unsigned char)2;
+                block->directories[n_directory_invalid]->status = (unsigned char)4;
                 fill_directory_name(block->directories[n_directory_invalid]->name, filename);
                 block->directories[n_directory_invalid]->file_pointer = file_pointer;
+
+                // save the changes
+                reverse_translate_directory_block(block, raw);
 
                 // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
                 file_desc -> index = get_index_block(raw_index_file);
+                // Save the index block
+                reverse_translate_index_block(file_desc -> index , raw_index_file);
                 file_desc -> reader = 0;
-                file_desc -> reading = 1;
+                file_desc -> reading = 0;
             }
             // Extension of the directory block
             else
@@ -240,69 +246,8 @@ crFILE *cr_open(char *path, char mode)
                 log_error("No such file in that directory, please re-write path.");
                 return NULL;
             }
-        } else if (mode == 'w')
-        {
-            if (exist_file_name)
-            {
-                log_error("File already exists");
-                return NULL;
-            }
-            else
-            {
-                // Conditional in case found a invalid directory
-                if (n_directory_invalid != -1)
-                {
-                    unsigned int file_pointer = block->directories[n_directory_invalid]->file_pointer;
-                    // Create the new index block for the file
-                    if (!(new_index_block_pointer = new_index_block(mounted_disk))) {
-                        log_error("No disk space left");
-                        return NULL;
-                    }
-                    // Set the invalid entry like a valid one
-                    // Rembember n_directory_invalid have number
-                    // of a invalid directory, make it valid
-                    block->directories[n_directory_invalid]->status = (unsigned char)4;
-                    fill_directory_name(block->directories[n_directory_invalid]->name, filename);
-                    block->directories[n_directory_invalid]->file_pointer = file_pointer;
-
-                    // save the changes
-                    reverse_translate_directory_block(block, raw);
-
-                    // Go to the index block of the file and give to cr_FILE
-                    Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
-                    file_desc -> index = get_index_block(raw_index_file);
-                    // Save the index block
-                    reverse_translate_index_block(file_desc -> index , raw_index_file);
-                    file_desc -> reader = 0;
-                    file_desc -> reading = 0;
-                }
-                // Change the status the directory and give
-                // the information to the new pointer
-                block->directories[31]->status = (unsigned char)32;
-                block->directories[31]->file_pointer = extension_pointer;
-                // Create a raw block with the extension directory
-                raw = go_to_block(mounted_disk, block->directories[31]->file_pointer);
-                free_directory_block(block);
-                block = get_directory_block(raw);
-                // Set the first entry
-                block->directories[1]->status = (unsigned char)2;
-                fill_directory_name(block->directories[1]->name, filename);
-                block->directories[1]->file_pointer = new_index_block_pointer;
-                    // Go to the index block of the file and give to cr_FILE
-                Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
-                file_desc -> index = get_index_block(raw_index_file);
-                file_desc -> reader = 0;
-
-            }
-        } else
-        {
-            log_error("Invalid method.");
-            return NULL;
         } 
-
-
-        }
-    } else
+        } else
     {
         log_error("Invalid mode.");
         return NULL;
@@ -918,11 +863,4 @@ int unload_folder(char *destination, char *location, DirectoryEntry *file)
     }
 
     return 1;
-}
-
-void test_get_free_block()	
-{	
-    // printf("size :- %d\n", file_desc->index->size);	
-    unsigned int new_dir_pointer = get_free_block_number(mounted_disk);
-
 }
