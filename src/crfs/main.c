@@ -10,14 +10,11 @@ int main(int argc, char **argv)
     for (int i = 0; i < 100; i++)
     {
         char result[50];  
-        sprintf(result, "%d", i); 
-        printf("%s\n", result);
+        sprintf(result, "%d", i);
         file = cr_open(result, 'w');
     }
-    
-    
-    // cr_bitmap(1, false);
 
+    // cr_bitmap(1, false);
     cr_close(file);
     cr_unmount();
     return 0;
