@@ -311,12 +311,20 @@ int cr_rm(char *path)
         log_error("No disk is mounted");
         return 0;
     }
-    char* new_path;
-    char* file;
+    int str_len = 0;
+    while (path[str_len] != '\0')
+    str_len++;
+    char new_path[str_len+1];
+    char file[str_len+1];
     split_path(path, new_path, file);
-    Block *raw = cr_cd(mounted_disk, new_path);
+    Block *raw = cr_folder_cd(mounted_disk, new_path);
     if (raw == NULL) {
         log_error("No such directory");
+        return 0;
+    }
+    raw = cr_cd(mounted_disk, path);
+    if (raw == NULL){
+        log_error("No such file");
         return 0;
     }
     DirectoryBlock *directory = get_directory_block(raw);
@@ -352,6 +360,7 @@ int cr_rm(char *path)
                             break;
                         }
                     }
+                    free_directioning_block(direc_simp);
                 } else if (i==253){
                     Block *direc_doble_raw = go_to_block(mounted_disk, index->double_directioning_block);
                     DirectioningBlock *direc_doble=  get_directioning_block(direc_doble_raw);
@@ -367,10 +376,12 @@ int cr_rm(char *path)
                                 break;
                             }
                         }
+                        free_directioning_block(direc_simp_doble);
                         if (size >= index->size){
                             break;
                         }
                     }
+                    free_directioning_block(direc_doble);
                 } else if (i==254){
                     Block *direc_triple_raw = go_to_block(mounted_disk, index->triple_directioning_block);
                     DirectioningBlock *direc_triple=  get_directioning_block(direc_triple_raw);
@@ -390,19 +401,23 @@ int cr_rm(char *path)
                                     break;
                                 }
                             }
+                            free_directioning_block(direc_simple_doble_triple);
                             if (size >= index->size){
                                 break;
                             }
                         }
+                        free_directioning_block(direc_doble_triple);
                         if (size >= index->size){
                             break;
                         }
                     }
+                    free_directioning_block(direc_triple);
                 }
                 if (size >= index->size){
                     break;
                 }
             }
+            free_index_block(index);
             subdirectory->status = (unsigned char)0;
             subdirectory->file_pointer = (unsigned char)0;
             int pos = 0;
@@ -414,7 +429,7 @@ int cr_rm(char *path)
             reverse_translate_directory_block(directory, raw_dir);
         }
     }
-    return 0;
+    return 1;
 }
 
 

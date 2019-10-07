@@ -61,7 +61,7 @@ Function description
 
 ### Return Value and Error Handling
 
-If `crFILE` es a `NULL` pointer, returns `-1`.
+If `crFILE` is a `NULL` pointer, returns `-1`.
 
 ### Notes
 
@@ -97,15 +97,14 @@ int cr_rm(char *path);
 
 ### Description
 
-Function description
+Remove the file in `path` from the file sistem, freeing all the memory used by it. 
 
 ### Return Value and Error Handling
 
-Describe return value
-
-### Notes
-
-Aditional notes about the function
+Returns `1` if succeeded, `0` otherwise.
+In case that `mounted_disk` is set to `NULL`, it logs a message to `stderr`.
+In case that `path` does not exist, it logs a message to `stderr`.
+In case that the path to the file does exist, but the file does not exist, it logs a message to `stderr`.
 
 ## cr_unload
 
