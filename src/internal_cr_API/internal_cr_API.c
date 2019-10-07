@@ -217,3 +217,58 @@ unsigned char *get_file_byte(Disk *disk, crFILE *file_desc, unsigned long positi
         return &aux->data[offset];
     }
 }
+
+
+int expand_file(crFILE *file, unsigned long size)
+{
+    if (size < DATA_BYTES_LIMIT) {
+
+    } else {
+        // Fill data blocks
+    }
+    if (size < SIMPLE_DIRECT_BYTES_LIMIT) {
+
+    } else {
+        // Fill simple directioning block
+    }
+    if (size < DOUBLE_DIRECT_BYTES_LIMIT) {
+
+    } else {
+        // Fill double directioning block
+    }
+    if (size < TRIPLE_DIRECT_BYTES_LIMIT) {
+
+    }
+}
+
+
+unsigned long new_file_block_amount(unsigned long size)
+{
+    unsigned long blocks = 0;
+    if (size < DATA_BYTES_LIMIT) {
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
+    } else {
+        // Fill data blocks
+        blocks += 252;
+    }
+    blocks += 1;  // Simple Directioning Block
+    if (size < SIMPLE_DIRECT_BYTES_LIMIT) {
+        size -= DATA_BYTES_LIMIT;
+    } else {
+        // Fill simple directioning block
+        blocks += 256;
+    }
+    blocks += 1;  // Double Directioning Block
+    if (size < DOUBLE_DIRECT_BYTES_LIMIT) {
+
+    } else {
+        // Fill double directioning block
+        blocks += (256 + 256 * 256);
+    }
+    blocks += 1;  // Triple Directioning Block
+    if (size < TRIPLE_DIRECT_BYTES_LIMIT) {
+
+    }
+}
