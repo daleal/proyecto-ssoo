@@ -123,6 +123,10 @@ int cr_read(crFILE *file_desc, void *buffer, int nbytes)
         log_error("Invalid file pointer");
         return -1;
     }
+    if (file_desc->reading != 1) {
+        log_error("crFILE is not a reader file");
+        return -1;
+    }
     int read = 0;
     unsigned char *data_read = buffer;
     if (file_desc->reader + nbytes > file_desc->index->size) {
@@ -142,6 +146,13 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
         log_error("Invalid file pointer");
         return -1;
     }
+    if (file_desc->reading == 1) {
+        log_error("crFILE is not a writer file");
+        return -1;
+    } else if (file_desc->reading == 2) {
+        log_error("crFILE has already been written");
+        return -1;
+    }
     expand_file(mounted_disk, file_desc, nbytes);
     unsigned long counter = 0;
     unsigned char *data = buffer;
@@ -153,6 +164,7 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
     }
     file_desc->index->size = counter;
     reverse_translate_index_block(file_desc->index, file_desc->raw_index);
+    file_desc->reading = 2;
     return counter;
 }
 
@@ -876,4 +888,10 @@ int load_folder(char *destination, char *location, char *foldername)
     free(d);
 
     return 1;
+}
+
+
+Disk *get_disk()
+{
+    return mounted_disk;
 }
