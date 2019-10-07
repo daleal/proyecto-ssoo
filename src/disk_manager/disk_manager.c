@@ -608,18 +608,11 @@ void fill_directory_name(char *name_buffer, char *name)
  */
 unsigned int get_directory_pointer(Disk *disk, DirectoryBlock *dir)
 {
-    if (dir->directories[0]->status == (unsigned char)32) {
-        Block *raw = go_to_block(disk, dir->directories[0]->file_pointer);
-        free_directory_block(dir);
-        dir = get_directory_block(raw);
-        return get_directory_pointer(disk, dir);
-    } else {
-        DirectoryEntry *directory;
-        for (int i = 0; i < 32; i++) {
-            directory = dir->directories[i];
-            if (directory->status == (unsigned char)8) {
-                return directory->file_pointer;
-            }
+    DirectoryEntry *directory;
+    for (int i = 0; i < 32; i++) {
+        directory = dir->directories[i];
+        if (directory->status == (unsigned char)8) {
+            return directory->file_pointer;
         }
     }
     return 0;

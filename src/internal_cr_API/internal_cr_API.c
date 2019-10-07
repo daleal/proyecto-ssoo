@@ -217,3 +217,188 @@ unsigned char *get_file_byte(Disk *disk, crFILE *file_desc, unsigned long positi
         return &aux->data[offset];
     }
 }
+
+
+int expand_file(Disk *disk, crFILE *file, unsigned long size)
+{
+    unsigned long blocks_to_use = new_file_block_amount(size);
+    if (blocks_to_use > free_blocks(disk)) {
+        // Not enough free blocks inside the disk
+        return 0;
+    }
+    IndexBlock *index = file->index;
+    DirectioningBlock *simple_direct;
+    DirectioningBlock *double_direct;
+    DirectioningBlock *triple_direct;
+    Block *simple_aux;
+    Block *double_aux;
+    Block *triple_aux;
+    unsigned int sector = 0;  // 0: data, 1: simple, 2: double, 3: triple
+    unsigned int block = 0;
+    unsigned int simple = 0;
+    unsigned int doublex = 0;
+    for (unsigned long _ = 0; _ < blocks_to_use; _++) {
+        if (sector == 0) {
+            index->data_blocks[block++] = get_free_block_number(disk);
+            if (block == 252) {
+                // Save index block and start simple indexing
+                reverse_translate_index_block(index, file->raw_index);
+                block = 0;
+                sector = 1;
+            }
+        } else if (sector == 1) {
+            if (block == 0) {
+                // Get a simple directioning block
+                index->simple_directioning_block = get_free_block_number(disk);
+                reverse_translate_index_block(index, file->raw_index);
+                simple_aux = go_to_block(disk, index->simple_directioning_block);
+                simple_direct = get_directioning_block(simple_aux);
+            }
+            simple_direct->pointers[block++] = get_free_block_number(disk);
+            if (block == 256) {
+                // Save simple dir block and start double indexing
+                reverse_translate_directioning_block(simple_direct, simple_aux);
+                block = 0;
+                sector = 2;
+            }
+
+        } else if (sector == 2) {
+            if ((block == 0) && (simple == 0)) {
+                // Get a double directioning block
+                index->double_directioning_block = get_free_block_number(disk);
+                reverse_translate_index_block(index, file->raw_index);
+                double_aux = go_to_block(disk, index->double_directioning_block);
+                double_direct = get_directioning_block(double_aux);
+            }
+            if (block == 0) {
+                double_direct->pointers[simple] = get_free_block_number(disk);
+                reverse_translate_directioning_block(double_direct, double_aux);
+                simple_aux = go_to_block(disk, double_direct->pointers[simple++]);
+                free_directioning_block(simple_direct);
+                simple_direct = get_directioning_block(simple_aux);
+            }
+            simple_direct->pointers[block++] = get_free_block_number(disk);
+            if (block == 256) {
+                // Save simple dir block
+                reverse_translate_directioning_block(simple_direct, simple_aux);
+                block = 0;
+            }
+            if (simple == 256) {
+                simple = 0;
+                sector = 3;
+            }
+
+        } else {
+            if ((block == 0) && (simple == 0) && (doublex == 0)) {
+                // Get a triple directioning block
+                index->triple_directioning_block = get_free_block_number(disk);
+                reverse_translate_index_block(index, file->raw_index);
+                triple_aux = go_to_block(disk, index->triple_directioning_block);
+                triple_direct = get_directioning_block(triple_aux);
+            }
+            if ((block == 0) && (simple == 0)) {
+                // Get a double directioning block
+                triple_direct->pointers[doublex] = get_free_block_number(disk);
+                reverse_translate_directioning_block(triple_direct, triple_aux);
+                double_aux = go_to_block(disk, double_direct->pointers[doublex++]);
+                free_directioning_block(double_direct);
+                double_direct = get_directioning_block(double_aux);
+            }
+            if (block == 0) {
+                double_direct->pointers[simple] = get_free_block_number(disk);
+                reverse_translate_directioning_block(double_direct, double_aux);
+                simple_aux = go_to_block(disk, double_direct->pointers[simple++]);
+                free_directioning_block(simple_direct);
+                simple_direct = get_directioning_block(simple_aux);
+            }
+            simple_direct->pointers[block++] = get_free_block_number(disk);
+            if (block == 256) {
+                // Save simple dir block
+                reverse_translate_directioning_block(simple_direct, simple_aux);
+                block = 0;
+            }
+            if (simple == 256) {
+                simple = 0;
+                reverse_translate_directioning_block(double_direct, double_aux);
+            }
+            if (doublex == 256) {
+                free_directioning_block(simple_direct);
+                free_directioning_block(double_direct);
+                free_directioning_block(triple_direct);
+                return 1;  // File is full! (impossible)
+            }
+
+        }
+    }
+    if (blocks_to_use < SIMPLE_DIRECT_BYTES_LIMIT) {
+        free_directioning_block(simple_direct);
+    } else if (blocks_to_use < DOUBLE_DIRECT_BYTES_LIMIT) {
+        free_directioning_block(simple_direct);
+        free_directioning_block(double_direct);
+    } else {
+        free_directioning_block(simple_direct);
+        free_directioning_block(double_direct);
+        free_directioning_block(triple_direct);
+    }
+    return 1;
+}
+
+
+/*
+ * This method recieves an unsigned long integer
+ * :size and returns the amount of blocks (not
+ * counting the index block) that a file of that
+ * size should occupy.
+ */
+unsigned long new_file_block_amount(unsigned long size)
+{
+    unsigned long blocks = 0;
+    if (size < DATA_BYTES_LIMIT) {
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
+    } else {
+        // Fill data blocks
+        blocks += 252;
+    }
+    blocks += 1;  // Simple Directioning Block
+    if (size < SIMPLE_DIRECT_BYTES_LIMIT) {
+        size -= DATA_BYTES_LIMIT;
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
+    } else {
+        // Fill simple directioning block
+        blocks += 256;
+    }
+    blocks += 1;  // Double Directioning Block
+    if (size < DOUBLE_DIRECT_BYTES_LIMIT) {
+        size -= SIMPLE_DIRECT_BYTES_LIMIT;
+        blocks += size / (BLOCK_SIZE * 256);
+        blocks += ((size % (BLOCK_SIZE * 256)) != 0);
+        // Offset to the simple directioning block
+        size -= BLOCK_SIZE * 256 * (size / (BLOCK_SIZE * 256));
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
+    } else {
+        // Fill double directioning block
+        blocks += (256 + 256 * 256);
+    }
+    blocks += 1;  // Triple Directioning Block
+    if (size < (unsigned long)TRIPLE_DIRECT_BYTES_LIMIT) {
+        size -= DOUBLE_DIRECT_BYTES_LIMIT;
+        blocks += size / (BLOCK_SIZE * 256 * 256);
+        blocks += ((size % (BLOCK_SIZE * 256 * 256)) != 0);
+        // Offset to the double directioning block
+        size -= BLOCK_SIZE * 256 * 256 * (size / (BLOCK_SIZE * 256 * 256));
+        blocks += size / (BLOCK_SIZE * 256);
+        blocks += ((size % (BLOCK_SIZE * 256)) != 0);
+        // Offset to the simple directioning block
+        size -= BLOCK_SIZE * 256 * (size / (BLOCK_SIZE * 256));
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
+    }
+    return blocks + 256 + 256 * 256 + 256 * 256 * 256;  // Never happening
+}
