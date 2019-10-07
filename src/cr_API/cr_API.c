@@ -282,6 +282,113 @@ int cr_close(crFILE *file_desc)
 
 int cr_rm(char *path)
 {
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return 0;
+    }
+    char* new_path;
+    char* file;
+    split_path(path, new_path, file);
+    Block *raw = cr_cd(mounted_disk, new_path);
+    if (raw == NULL) {
+        log_error("No such directory");
+        return 0;
+    }
+    DirectoryBlock *directory = get_directory_block(raw);
+    unsigned int dir_pointer = get_directory_pointer(mounted_disk, directory);
+    DirectoryEntry *subdirectory;
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
+            directory = get_directory_block(raw); 
+            i = -1;
+        } else if ((subdirectory->status == (unsigned char)4) && !strcmp(subdirectory->name,file))
+        {
+            int bit = turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
+            Block *index_raw = go_to_block(mounted_disk,subdirectory->file_pointer);
+            IndexBlock *index = get_index_block(index_raw);
+            int size = 0;
+            for (int i=0;i<256;i++){
+                turn_bitmap_bit_to_zero(mounted_disk, index->data_blocks[i]);
+                size += 1024;
+                if (size >= index->size){
+                    break;
+                }
+                if (i==252){
+                    Block *direc_simp_raw = go_to_block(mounted_disk,index->simple_directioning_block);
+                    DirectioningBlock *direc_simp=  get_directioning_block(direc_simp_raw);
+                    turn_bitmap_bit_to_zero(mounted_disk, index->simple_directioning_block);
+                    for (int j = 0; j<256;j++){
+                        turn_bitmap_bit_to_zero(mounted_disk, direc_simp->pointers[i]);
+                        size += 1024;
+                        if (size >= index->size){
+                            break;
+                        }
+                    }
+                } else if (i==253){
+                    Block *direc_doble_raw = go_to_block(mounted_disk, index->double_directioning_block);
+                    DirectioningBlock *direc_doble=  get_directioning_block(direc_doble_raw);
+                    turn_bitmap_bit_to_zero(mounted_disk, index->double_directioning_block);
+                    for (int j = 0; j<256;j++){
+                        Block *direc_simp_doble_raw = go_to_block(mounted_disk, direc_doble->pointers[j]);
+                        DirectioningBlock *direc_simp_doble=  get_directioning_block(direc_simp_doble_raw);
+                        turn_bitmap_bit_to_zero(mounted_disk, direc_doble->pointers[j]);
+                        for (int k=0;k<256;k++){
+                            turn_bitmap_bit_to_zero(mounted_disk, direc_simp_doble->pointers[k]);
+                            size += 1024;
+                            if (size >= index->size){
+                                break;
+                            }
+                        }
+                        if (size >= index->size){
+                            break;
+                        }
+                    }
+                } else if (i==254){
+                    Block *direc_triple_raw = go_to_block(mounted_disk, index->triple_directioning_block);
+                    DirectioningBlock *direc_triple=  get_directioning_block(direc_triple_raw);
+                    turn_bitmap_bit_to_zero(mounted_disk, index->triple_directioning_block);
+                    for (int j = 0;j<256;j++){
+                        Block *direc_doble_triple_raw = go_to_block(mounted_disk, direc_triple->pointers[j]);
+                        DirectioningBlock *direc_doble_triple=  get_directioning_block(direc_doble_triple_raw);
+                        turn_bitmap_bit_to_zero(mounted_disk, direc_triple->pointers[j]);
+                        for (int k=0;k<256;k++){
+                            Block *direc_simple_doble_triple_raw = go_to_block(mounted_disk, direc_doble_triple->pointers[k]);
+                            DirectioningBlock *direc_simple_doble_triple=  get_directioning_block(direc_simple_doble_triple_raw);
+                            turn_bitmap_bit_to_zero(mounted_disk, direc_doble_triple->pointers[k]);
+                            for(int l=0;l<256;l++){
+                                turn_bitmap_bit_to_zero(mounted_disk, direc_simple_doble_triple->pointers[l]);
+                                size += 1024;
+                                if (size >= index->size){
+                                    break;
+                                }
+                            }
+                            if (size >= index->size){
+                                break;
+                            }
+                        }
+                        if (size >= index->size){
+                            break;
+                        }
+                    }
+                }
+                if (size >= index->size){
+                    break;
+                }
+            }
+            subdirectory->status = (unsigned char)0;
+            subdirectory->file_pointer = (unsigned char)0;
+            int pos = 0;
+            while (subdirectory->name[pos] != '\0'){
+                subdirectory->name[pos] = '\0';
+                pos++;
+            }
+            Block* raw_dir = go_to_block(mounted_disk, dir_pointer);
+            reverse_translate_directory_block(directory, raw_dir);
+        }
+    }
     return 0;
 }
 
