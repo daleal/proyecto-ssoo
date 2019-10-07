@@ -694,9 +694,8 @@ unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
     Block *raw_dir = go_to_block(disk, new_dir_pointer);
     DirectoryBlock *new_dir = get_directory_block(raw_dir);
 
-    // Father Directory entry
-    new_dir->directories[0]->status = (unsigned char)32;
-    fill_directory_name(new_dir->directories[0]->name, ".");
+    // Father Directory entry to Invalid Directory entry
+    new_dir->directories[0]->status = (unsigned char)1;
 
     // Self Directory entry to Invalid Directory entry
     new_dir->directories[1]->status = (unsigned char)1;
@@ -731,8 +730,8 @@ unsigned int new_index_block(Disk *disk)
     {
         new_dir -> data_blocks[i] = 0;
     }
-    
-    
+
+
 
     // Translate dir block to raw block
     raw_dir = go_to_block(disk, new_dir_pointer);
