@@ -186,11 +186,6 @@ int cr_rm(char *path)
         log_error("No such directory");
         return 0;
     }
-    raw = cr_cd(mounted_disk, path);
-    if (raw == NULL){
-        log_error("No such file");
-        return 0;
-    }
     DirectoryBlock *directory = get_directory_block(raw);
     unsigned int dir_pointer = get_directory_pointer(mounted_disk, directory);
     DirectoryEntry *subdirectory;
@@ -291,6 +286,8 @@ int cr_rm(char *path)
             }
             Block* raw_dir = go_to_block(mounted_disk, dir_pointer);
             reverse_translate_directory_block(directory, raw_dir);
+            free_directory_block(directory);
+            break;
         }
     }
     return 1;
