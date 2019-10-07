@@ -330,7 +330,10 @@ int expand_file(Disk *disk, crFILE *file, unsigned long size)
 
         }
     }
-    if (blocks_to_use < SIMPLE_DIRECT_BYTES_LIMIT) {
+    reverse_translate_index_block(index, file->raw_index);
+    if (blocks_to_use < DATA_BYTES_LIMIT) {
+
+    } else if (blocks_to_use < SIMPLE_DIRECT_BYTES_LIMIT) {
         free_directioning_block(simple_direct);
     } else if (blocks_to_use < DOUBLE_DIRECT_BYTES_LIMIT) {
         free_directioning_block(simple_direct);

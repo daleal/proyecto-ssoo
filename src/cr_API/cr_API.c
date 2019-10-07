@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 #include "../error_handler/error_handler.h"
 #include "cr_API.h"
 
@@ -14,240 +15,105 @@ Disk *mounted_disk = NULL;
 // File management functions
 crFILE *cr_open(char *path, char mode)
 {
-
-    crFILE *file_desc = malloc(sizeof(crFILE));
-
-    // Variables for case of root
-    char* path_for_split;
-    char* extension = "/";
-    int path_has_backlas = 0;
-    // Review if have backslas
-    for (int i = 0; i < strlen(path); i++)
-    {
-        if (path[i]=='/')
-        {
-            path_has_backlas = 1;
-        }
-
-    }
-    // In case dont have one, make a concatenate in the begin
-    // If have one, copy the same path
-    if (!path_has_backlas)
-    {
-        path_for_split = malloc(strlen(extension)+1+strlen(path));
-        strcpy(path_for_split, extension);
-        strcat(path_for_split, path);
-    } else
-    {
-        path_for_split = malloc(1+strlen(path));
-        strcpy(path_for_split, path);
-    }
-
-
-
-    char new_path[strlen(path_for_split) + 1];
-
-    // First split the path
-    char filename[strlen(path_for_split) + 1];
-    split_path(path_for_split, new_path, filename);
-    // Free the path for split
-    free(path_for_split);
-
-    // Condition in case the disk is unmounted
-    if (mounted_disk == NULL) {
-        log_error("No disk is mounted");
-        return 0;
-    }
-
-    // Second give the folder path to a raw block
-    Block *raw =  cr_folder_cd(mounted_disk, new_path);
-
-    // Variable for a conditional filename
-    int exist_file_name = 0;
-    int find_it_file_name = 0;
-
-    // Variable for save the number of the directory
-    // in the directory block of filename
-    int n_directory_file_name;
-
-    // Variable for write mode, save the number of a invalid directory
-    int n_directory_invalid;
-    int capture_invalid = 0;
-
-    // Variable for write mode, use for save the pointer for create new index
-    // block and the index block
-    unsigned int extension_pointer;
-    unsigned int new_index_block_pointer;
-
-    // Condition in case not found the folder path
-    if (raw == NULL)
-    {
-        log_error("No such directory, please re-write path.");
+    char folder[strlen(path) + 1];
+    char filename[strlen(path) + 1];
+    split_path(path, folder, filename);
+    Block *raw_father = cr_folder_cd(mounted_disk, folder);
+    if (raw_father == NULL) {
+        log_error("Invalid path to file");
         return NULL;
     }
-    // Third search the filename in the directory block
-    DirectoryBlock *block = get_directory_block(raw);
-    for (int n_dir = 0; n_dir < 32; n_dir++)
-    {
-           
-        if (!strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
-        {
-
-            exist_file_name = 1;
-            // Save the number directory
-            n_directory_file_name = n_dir;
-            find_it_file_name = 1;
-        }
-
-        // Conditional only for write mode
-
-
-        // Conditional only for write mode
-
-        if ((block->directories[n_dir]->status != (unsigned char)2) &&    // Directory
-        (block->directories[n_dir]->status != (unsigned char)4) &&    // File
-        (block->directories[n_dir]->status != (unsigned char)8) &&    // Same Dir
-        (block->directories[n_dir]->status != (unsigned char)16) && !capture_invalid)
-        {
-            if (n_dir == 31 && block->directories[n_dir]->status != (unsigned char)32)
-            {
-                // Create the extension
-                if (!(extension_pointer = create_directory_extension(mounted_disk))) {
-                    log_error("No disk space left");
-                    return NULL;
-                }
-                // Create the new index block for the file
-                if (!(new_index_block_pointer = new_index_block(mounted_disk))) {
-                    log_error("No disk space left");
-                    return NULL;
-                }
-                // Change the status the directory and give
-                // the information to the new pointer
-                block->directories[31]->status = (unsigned char)32;
-                block->directories[31]->file_pointer = extension_pointer;
-                // save the changes in directory
-                reverse_translate_directory_block(block, raw);
-
-                raw = go_to_block(mounted_disk, 0);
-                free_directory_block(block);
-                block = get_directory_block(raw);
-
-                // Create a raw block with the extension directory
-                raw = go_to_block(mounted_disk, extension_pointer);
-                free_directory_block(block);
-                block = get_directory_block(raw);
-
-                // Set the first entry
-                block->directories[0]->status = (unsigned char)4;
-                fill_directory_name(block->directories[0]->name, filename);
-                block->directories[0]->file_pointer = new_index_block_pointer;
-
-                // save the changes in the new_directory
-                reverse_translate_directory_block(block, raw);
-
-                 // Go to the index block of the file and give to cr_FILE
-                Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
-                file_desc -> index = get_index_block(raw_index_file);
-                file_desc -> raw_index = raw_index_file;
-
-                // Save the index block
-                reverse_translate_index_block(file_desc -> index , raw_index_file);
-                file_desc -> reader = 0;
-                file_desc -> reading = 0;
-
-                // This is vestige of the past modelation
-                n_directory_invalid = -1;
-                break;
-            } else if (block->directories[n_dir]->status == (unsigned char)32 && n_dir == 31)
-                {
-                    if (!find_it_file_name)
-                    {
-                        raw = go_to_block(mounted_disk, block->directories[n_dir]->file_pointer);
-                        free_directory_block(block);
-                        block = get_directory_block(raw);
-                        n_dir = -1;
-                    }
-
-        }
-
-            else
-            {
-                // This is vestige of the past modelation
-                n_directory_invalid = n_dir;
-                capture_invalid = 1;
-            }
-
-
-
-        }
-
-
-    }
-    // Forth Check the mode
-    if (mode == 'r')
-    {
-        // Condition in case not found the filename
-        if (exist_file_name)
-        {
-            unsigned int file_pointer = block->directories[n_directory_file_name]->file_pointer;
-            // Go to the index block of the file and give to cr_FILE
-            Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
-            file_desc -> index = get_index_block(raw_index_file);
-            file_desc -> raw_index = raw_index_file;
-            file_desc -> reader = 0;
-            file_desc -> reading = 1;
-        }
-        else
-        {
-            log_error("No such file in that directory, please re-write path.");
+    if (mode == 'r') {
+        if (!cr_exists(path)) {
+            log_error("Invalid file");
             return NULL;
         }
-    } else if (mode == 'w')
-    {
-        if (exist_file_name)
-        {
+        DirectoryBlock *dir = get_directory_block(raw_father);
+        DirectoryEntry *subdirectory;
+
+        for (int i = 0; i < 32; i++) {
+            subdirectory = dir->directories[i];
+            if (subdirectory->status == (unsigned char)32) {
+                // :subdirectory is the continuation of :directory
+                raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
+                free_directory_block(dir);
+                dir = get_directory_block(raw_father);  // Get continuation
+                i = -1;  // So the loop starts over with the continuation
+            } else if (
+                (subdirectory->status == (unsigned char)4) &&  // File
+                !strcmp(subdirectory->name, filename)) {
+                // File to open
+                crFILE *file = malloc(sizeof(crFILE));
+                file->raw_index = go_to_block(mounted_disk, subdirectory->file_pointer);
+                file->index = get_index_block(file->raw_index);
+                file->reader = 0;
+                file->reading = 1;
+                free_directory_block(dir);
+                return file;
+            }
+        }
+        log_error("Could not find requested file");
+        return NULL;
+    } else if (mode == 'w') {
+        if (cr_exists(path)) {
             log_error("File already exists");
             return NULL;
         }
-        else
-        {
-            // Conditional in case found a invalid directory
-            if (n_directory_invalid != -1)
-            {
+
+        DirectoryBlock *dir = get_directory_block(raw_father);
+        DirectoryEntry *subdirectory;
+
+        for (int i = 0; i < 32; i++) {
+            subdirectory = dir->directories[i];
+            if (subdirectory->status == (unsigned char)32) {
+                // :subdirectory is the continuation of :directory
+                raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
+                free_directory_block(dir);
+                dir = get_directory_block(raw_father);  // Get continuation
+                i = -1;  // So the loop starts over with the continuation
+            } else if ((i == 31) && (subdirectory->status != (unsigned char)32)) {
+                subdirectory->file_pointer = create_directory_extension(mounted_disk);
+                // Save changed directory
+                reverse_translate_directory_block(dir, raw_father);
+                // Get continuation
+                raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
+                free_directory_block(dir);
+                dir = get_directory_block(raw_father);  // Get continuation
+                i = -1;  // So the loop starts over with the continuation
+            } else if (
+                (subdirectory->status != (unsigned char)2) &&
+                (subdirectory->status != (unsigned char)4) &&
+                (subdirectory->status != (unsigned char)8) &&
+                (subdirectory->status != (unsigned char)16) &&
+                (subdirectory->status != (unsigned char)32)) {
+                // Empty entry
+                unsigned int index_block_pointer;
                 // Create the new index block for the file
-                if (!(new_index_block_pointer = new_index_block(mounted_disk))) {
+                if (!(index_block_pointer = new_index_block(mounted_disk))) {
+                    free_directory_block(dir);
                     log_error("No disk space left");
                     return NULL;
                 }
-                // Set the invalid entry like a valid one
-                // Rembember n_directory_invalid have number
-                // of a invalid directory, make it valid
-                block->directories[n_directory_invalid]->status = (unsigned char)4;
-                fill_directory_name(block->directories[n_directory_invalid]->name, filename);
-                block->directories[n_directory_invalid]->file_pointer = new_index_block_pointer;
-
-                // save the changes
-                reverse_translate_directory_block(block, raw);
-
-                // Go to the index block of the file and give to cr_FILE
-                Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
-                file_desc -> index = get_index_block(raw_index_file);
-                file_desc -> raw_index = raw_index_file;
-                // Save the index block
-                reverse_translate_index_block(file_desc -> index , raw_index_file);
-                file_desc -> reader = 0;
-                file_desc -> reading = 0;
+                crFILE *file = malloc(sizeof(crFILE));
+                fill_directory_name(subdirectory->name, filename);
+                subdirectory->status = (unsigned char)4;
+                subdirectory->file_pointer = index_block_pointer;
+                // Save changed directory
+                reverse_translate_directory_block(dir, raw_father);
+                file->raw_index = go_to_block(mounted_disk, subdirectory->file_pointer);
+                file->index = get_index_block(file->raw_index);
+                file->reader = 0;
+                file->reading = 0;
+                free_directory_block(dir);
+                return file;
             }
-            // Extension of the directory block
-        } 
-        } else
-    {
-        log_error("Invalid mode.");
+        }
+    } else {
+        log_error("Invalid file mode");
         return NULL;
     }
-
-
-    return file_desc;
+    log_error("Invalid action");
+    return NULL;
 }
 
 
@@ -276,19 +142,17 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
         log_error("Invalid file pointer");
         return -1;
     }
-    file_desc->index->size = 0;
+    expand_file(mounted_disk, file_desc, nbytes);
     unsigned long counter = 0;
     unsigned char *data = buffer;
     unsigned char *location;
     while (nbytes--) {
-        if (data[file_desc->index->size] == '\0') {
-            break;
-        } else {
-            location = get_file_byte(mounted_disk, file_desc, counter);
-            *location = data[file_desc->index->size++];
-            ++counter;
-        }
+        location = get_file_byte(mounted_disk, file_desc, counter);
+        *location = data[file_desc->index->size++];
+        ++counter;
     }
+    file_desc->index->size = counter;
+    reverse_translate_index_block(file_desc->index, file_desc->raw_index);
     return counter;
 }
 
@@ -330,11 +194,11 @@ int cr_rm(char *path)
         if (subdirectory->status == (unsigned char)32) {
             raw = go_to_block(mounted_disk, subdirectory->file_pointer);
             free_directory_block(directory);
-            directory = get_directory_block(raw); 
+            directory = get_directory_block(raw);
             i = -1;
         } else if ((subdirectory->status == (unsigned char)4) && !strcmp(subdirectory->name,file))
         {
-            int bit = turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
+            turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
             Block *index_raw = go_to_block(mounted_disk,subdirectory->file_pointer);
             IndexBlock *index = get_index_block(index_raw);
             int size = 0;
@@ -430,12 +294,6 @@ int cr_rm(char *path)
 }
 
 
-void aux()
-{
-    cr_unload("/dir", "./");
-}
-
-
 int cr_unload(char *orig, char *dest)
 {
     bool exists = false;
@@ -499,7 +357,22 @@ int cr_unload(char *orig, char *dest)
 
 int cr_load(char *orig)
 {
-    return 0;
+    struct stat st;
+    if (stat(orig, &st) == -1) {
+        log_error("Invalid path");
+        return 0;
+    }
+    char orig_path[strlen(orig) + 1];
+    char filename[strlen(orig) + 1];
+    split_path(orig, orig_path, filename);
+    if (S_ISDIR(st.st_mode)) {
+        // Directory
+        load_folder("/", orig_path, filename);
+    } else {
+        // File
+        load_file("/", orig_path, filename);
+    }
+    return 1;
 }
 
 
@@ -804,6 +677,67 @@ int unload_file(char *destination, char *location, DirectoryEntry *file)
 
 /*
  * The method recieves a destination path
+ * :destination and a string :filename
+ * and copies the file in :location/:filename
+ * to the virtual filesystem inside :destination.
+ */
+int load_file(char *destination, char *location, char *filename)
+{
+    /*
+     * :location corresponds to the real system location
+     * without the filename attached and :full_path
+     * corresponds to the real system location
+     * with the filename attached.
+     * :destination corresponds to the virtual system location
+     * without the filename attached and :virtual_path
+     * corresponds to the virtual system location
+     * with the filename attached.
+     */
+    char full_path[strlen(location) + 27 + 2];
+    sprintf(full_path, "%s/%s", location, filename);
+
+    char virtual_path[strlen(destination) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", destination, filename);
+
+    if (cr_exists(virtual_path)) {
+        // File already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload file. File %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    // Open files
+    crFILE *writing_file = cr_open(virtual_path, 'w');
+    FILE *reading_file = fopen(full_path, "rb");
+
+    if (reading_file == NULL) {
+        // Real file does not exist
+        return -1;
+    }
+
+    fseek(reading_file, 0, SEEK_END);
+    long fsize = ftell(reading_file);
+    fseek(reading_file, 0, SEEK_SET);
+
+    // Get file data in the buffer
+    unsigned char *buffer = malloc((fsize + 1) * sizeof(unsigned char));
+    fread(buffer, sizeof(unsigned char), fsize, reading_file);
+
+    // Write data in virtual file
+    cr_write(writing_file, buffer, fsize);
+
+    // Close files
+    free(buffer);
+    cr_close(writing_file);
+    fclose(reading_file);
+
+    return 1;
+}
+
+
+/*
+ * The method recieves a destination path
  * :destination and a DirectoryEntry struct
  * :folder_entry and copies the folder pointed
  * by :folder_entry to the real filesystem
@@ -866,6 +800,80 @@ int unload_folder(char *destination, char *location, DirectoryEntry *file)
             unload_file(full_path, virtual_path, subdirectory);
         }
     }
+    free_directory_block(dir);
+
+    return 1;
+}
+
+
+/*
+ * The method recieves a destination path
+ * :destination and a DirectoryEntry struct
+ * :folder_entry and copies the folder pointed
+ * by :folder_entry to the real filesystem
+ * inside :destination.
+ */
+int load_folder(char *destination, char *location, char *foldername)
+{
+    /*
+     * :destination and :location don't include the
+     * folder's name, they are only the place where
+     * the folder lives in the real computer and where
+     * it will live in the virtual disk.
+     * :virtual_path and :full_path include the name
+     * of the folder once created
+     */
+    char path_start[strlen(location) + 10];
+    strcpy(path_start, location);
+    if (!strcmp(location, "")) {
+        strcpy(path_start, ".");
+    }
+    char full_path[strlen(path_start) + 27 + 2];
+    sprintf(full_path, "%s/%s", path_start, foldername);
+
+    char virtual_path[strlen(location) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", location, foldername);
+
+    if (cr_exists(virtual_path)) {
+        // Directory already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload directory. Directory %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    if (!cr_mkdir(full_path)) {
+        // Failed to create the directory
+        return -1;
+    }
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(full_path);
+
+    if (d == NULL) {
+        return 0;
+    }
+    while ((dir = readdir(d)) != NULL) {
+        if (!strcmp(dir->d_name, ".") || !strcmp(dir->d_name, "..")) {
+
+        } else {
+            char sub_path[strlen(dir->d_name) + 27 + 2];
+            sprintf(sub_path, "%s/%s", full_path, dir->d_name);
+            struct stat st;
+            stat(sub_path, &st);
+            if (S_ISDIR(st.st_mode)) {
+                // Directory
+                load_folder(virtual_path, full_path, dir->d_name);
+            } else {
+                // File
+                load_file(virtual_path, full_path, dir->d_name);
+            }
+            // dir->d_name;  // Do something
+        }
+    }
+
+    free(d);
 
     return 1;
 }
