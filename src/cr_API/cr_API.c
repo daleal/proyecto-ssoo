@@ -183,9 +183,8 @@ crFILE *cr_open(char *path, char mode)
                 // Extension of the directory block
                 else
                 {
-                    unsigned int actual_pointer =  get_directory_pointer(mounted_disk, block);
                     // Create the extension
-                    if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+                    if (!(extension_pointer = create_directory_extension(mounted_disk))) {
                         log_error("No disk space left");
                         return NULL;
                     }
@@ -502,7 +501,6 @@ int cr_mkdir(char *foldername)
     Block *raw_father;
     DirectoryBlock *father;
     unsigned int father_pointer;
-    unsigned int actual_pointer;
     unsigned int new_dir_pointer;
     DirectoryEntry *subdirectory;
     split_path(foldername, new_path, filename);
@@ -513,7 +511,6 @@ int cr_mkdir(char *foldername)
     }
     father = get_directory_block(raw_father);
     father_pointer = get_directory_pointer(mounted_disk, father);
-    actual_pointer = father_pointer;
 
     // Create new dir
     if (!(new_dir_pointer = new_directory_block(mounted_disk, father_pointer))) {
@@ -552,7 +549,7 @@ int cr_mkdir(char *foldername)
         if ((subdirectory->status != (unsigned char)32) && (i == 31)) {
             // Could not find empty entry and there are no more entries
             unsigned int extension_pointer;
-            if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+            if (!(extension_pointer = create_directory_extension(mounted_disk))) {
                 log_error("No disk space left");
                 if (!turn_bitmap_bit_to_zero(mounted_disk, new_dir_pointer)) {
                     log_error("Could not free unused block. Drive might be malfunctioning");
@@ -564,7 +561,6 @@ int cr_mkdir(char *foldername)
             i = -1;  // So the loop starts over with the continuation
         } else if ((subdirectory->status == (unsigned char)32) && (i != 0)) {
             // :subdirectory is the continuation of :father
-            actual_pointer = subdirectory->file_pointer;
             raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
             free_directory_block(father);
             father = get_directory_block(raw_father);  // Get continuation

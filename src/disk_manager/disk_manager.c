@@ -684,10 +684,10 @@ unsigned int new_directory_block(Disk *disk, unsigned int father_pointer)
  * empty block, the method returns 0. Otherwise,
  * it returns an unsigned int pointer to itself.
  */
-unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
+unsigned int create_directory_extension(Disk *disk)
 {
     unsigned int new_dir_pointer;
-    if (!(new_dir_pointer = new_directory_block(disk, block_pointer))) {
+    if (!(new_dir_pointer = new_directory_block(disk, 0))) {
         return 0;
     }
 
