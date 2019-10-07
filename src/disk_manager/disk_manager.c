@@ -57,7 +57,7 @@ int close_disk(Disk *disk)
     if (disk == NULL) {
         return 0;
     }
-    save_disk(disk);
+    // save_disk(disk);
     free_disk(disk);
     return 1;
 }
@@ -684,19 +684,18 @@ unsigned int new_directory_block(Disk *disk, unsigned int father_pointer)
  * empty block, the method returns 0. Otherwise,
  * it returns an unsigned int pointer to itself.
  */
-unsigned int create_directory_extension(Disk *disk, unsigned int block_pointer)
+unsigned int create_directory_extension(Disk *disk)
 {
     unsigned int new_dir_pointer;
-    if (!(new_dir_pointer = new_directory_block(disk, block_pointer))) {
+    if (!(new_dir_pointer = new_directory_block(disk, 0))) {
         return 0;
     }
 
     Block *raw_dir = go_to_block(disk, new_dir_pointer);
     DirectoryBlock *new_dir = get_directory_block(raw_dir);
 
-    // Father Directory entry
-    new_dir->directories[0]->status = (unsigned char)32;
-    fill_directory_name(new_dir->directories[0]->name, ".");
+    // Father Directory entry to Invalid Directory entry
+    new_dir->directories[0]->status = (unsigned char)1;
 
     // Self Directory entry to Invalid Directory entry
     new_dir->directories[1]->status = (unsigned char)1;
@@ -731,8 +730,8 @@ unsigned int new_index_block(Disk *disk)
     {
         new_dir -> data_blocks[i] = 0;
     }
-    
-    
+
+
 
     // Translate dir block to raw block
     raw_dir = go_to_block(disk, new_dir_pointer);

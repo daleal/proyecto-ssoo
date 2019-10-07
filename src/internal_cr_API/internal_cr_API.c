@@ -14,6 +14,7 @@ Block *cr_cd(Disk *disk, char *path)
     bool found = false;
     DirectoryEntry *directory;
     Block *raw = cr_folder_cd(disk, new_path);
+    Block *father = raw;
     DirectoryBlock *block = get_directory_block(raw);
     if (raw == NULL) {
         return NULL;
@@ -37,6 +38,7 @@ Block *cr_cd(Disk *disk, char *path)
                 raw = go_to_block(disk, directory->file_pointer);
                 free_directory_block(block);
                 block = get_directory_block(raw);
+                father = raw;
                 break;
             }
         }
@@ -46,14 +48,8 @@ Block *cr_cd(Disk *disk, char *path)
         free_directory_block(block);
         return NULL;
     } else {
-        // In case that :raw is the continuation of another directory
-        while (block->directories[0]->status == (unsigned char)32) {
-            raw = go_to_block(disk, block->directories[0]->file_pointer);
-            free_directory_block(block);
-            block = get_directory_block(raw);
-        }
         free_directory_block(block);
-        return raw;
+        return father;
     }
 }
 
@@ -68,6 +64,7 @@ Block *cr_folder_cd(Disk *disk, char *path)
     strcpy(tokenize, path);
     char *subfolder = strtok(tokenize, "/");  // Remove initial slash
     Block *actual = disk->index;
+    Block *father = actual;
     DirectoryBlock *interpreted = get_directory_block(actual);
     DirectoryEntry *directory;
     bool found;
@@ -92,6 +89,7 @@ Block *cr_folder_cd(Disk *disk, char *path)
                     actual = go_to_block(disk, directory->file_pointer);
                     free_directory_block(interpreted);
                     interpreted = get_directory_block(actual);
+                    father = actual;
                 }
             }
         }
@@ -102,14 +100,8 @@ Block *cr_folder_cd(Disk *disk, char *path)
         }
         subfolder = strtok(NULL, "/");
     }
-    // In case that :actual is the continuation of another directory
-    while (interpreted->directories[0]->status == (unsigned char)32) {
-        actual = go_to_block(disk, interpreted->directories[0]->file_pointer);
-        free_directory_block(interpreted);
-        interpreted = get_directory_block(actual);
-    }
     free_directory_block(interpreted);
-    return actual;
+    return father;
 }
 
 

@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     
     
     // cr_bitmap(1, false);
+
     cr_close(file);
     cr_unmount();
     return 0;
