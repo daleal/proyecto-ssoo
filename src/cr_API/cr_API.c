@@ -50,33 +50,16 @@ int cr_rm(char *path)
         log_error("No disk is mounted");
         return 0;
     }
-    int c = 0;
-
-    while (path[c] != '\0')
-    c++;
-
-    int sep;
-    for (int i=c-1; i>=0;i--){
-        if (path[i] == '/'){
-            sep = i;
-            break;
-        }
-    }
-    char new_path[c];
-    char file[c-sep-1];
-    for (int i = 0; i<sep;i++){
-        new_path[i] = path[i];
-    }
-    for (int i=0;i<c-sep-1;i++){
-        file[i] = path[i+sep+1];
-    }
+    char* new_path;
+    char* file;
+    split_path(path, new_path, file);
     Block *raw = cr_cd(mounted_disk, new_path);
     if (raw == NULL) {
         log_error("No such directory");
         return 0;
     }
     DirectoryBlock *directory = get_directory_block(raw);
-    unsigned int dir_pointer = get_directory_pointer(mounted_disk, directory)
+    unsigned int dir_pointer = get_directory_pointer(mounted_disk, directory);
     DirectoryEntry *subdirectory;
     for (int i = 0; i < 32; i++) {
         subdirectory = directory->directories[i];
