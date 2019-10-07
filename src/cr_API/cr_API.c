@@ -46,6 +46,62 @@ int cr_close(crFILE *file_desc)
 
 int cr_rm(char *path)
 {
+    if (mounted_disk == NULL) {
+        log_error("No disk is mounted");
+        return 0;
+    }
+    int c = 0;
+
+    while (path[c] != '\0')
+    c++;
+
+    int sep;
+    for (int i=c-1; i>=0;i--){
+        if (path[i] == '/'){
+            sep = i;
+            break;
+        }
+    }
+    char new_path[c];
+    char file[c-sep-1];
+    for (int i = 0; i<sep;i++){
+        new_path[i] = path[i];
+    }
+    for (int i=0;i<c-sep-1;i++){
+        file[i] = path[i+sep+1];
+    }
+    Block *raw = cr_cd(mounted_disk, new_path);
+    if (raw == NULL) {
+        log_error("No such directory");
+        return 0;
+    }
+    DirectoryBlock *directory = get_directory_block(raw);
+    unsigned int dir_pointer = get_directory_pointer(mounted_disk, directory)
+    DirectoryEntry *subdirectory;
+    for (int i = 0; i < 32; i++) {
+        subdirectory = directory->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(directory);
+            directory = get_directory_block(raw); 
+            i = -1;
+        } else if ((subdirectory->status == (unsigned char)4) && !strcmp(subdirectory->name,file))
+        {
+            int bit = turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
+            Block *index_raw = go_to_block(mounted_disk,subdirectory->file_pointer);
+            IndexBlock *index = get_index_block(index_raw);
+            printf("%d\n", index->size);
+            subdirectory->status = (unsigned char)0;
+            subdirectory->file_pointer = (unsigned char)0;
+            int pos = 0;
+            while (subdirectory->name[pos] != '\0'){
+                subdirectory->name[pos] = '\0';
+                pos++;
+            }
+            Block* raw_dir = go_to_block(mounted_disk, dir_pointer);
+            reverse_translate_directory_block(directory, raw_dir);
+        }
+    }
     return 0;
 }
 
