@@ -148,6 +148,7 @@ crFILE *cr_open(char *path, char mode)
                  // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
                 file_desc -> index = get_index_block(raw_index_file);
+                file_desc -> raw_index = raw_index_file;
 
                 // Save the index block
                 reverse_translate_index_block(file_desc -> index , raw_index_file);
@@ -192,6 +193,7 @@ crFILE *cr_open(char *path, char mode)
             // Go to the index block of the file and give to cr_FILE
             Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
             file_desc -> index = get_index_block(raw_index_file);
+            file_desc -> raw_index = raw_index_file;
             file_desc -> reader = 0;
             file_desc -> reading = 1;
         }
@@ -230,6 +232,7 @@ crFILE *cr_open(char *path, char mode)
                 // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
                 file_desc -> index = get_index_block(raw_index_file);
+                file_desc -> raw_index = raw_index_file;
                 // Save the index block
                 reverse_translate_index_block(file_desc -> index , raw_index_file);
                 file_desc -> reader = 0;
