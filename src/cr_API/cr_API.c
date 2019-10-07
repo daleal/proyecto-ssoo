@@ -43,8 +43,6 @@ crFILE *cr_open(char *path, char mode)
         strcpy(path_for_split, path);
     }
 
-
-
     char new_path[strlen(path_for_split) + 1];
 
     // First split the path
@@ -89,7 +87,7 @@ crFILE *cr_open(char *path, char mode)
     DirectoryBlock *block = get_directory_block(raw);
     for (int n_dir = 0; n_dir < 32; n_dir++)
     {
-           
+
         if (!strcmp(block->directories[n_dir]->name, filename) && block->directories[n_dir]->status == (unsigned char)4)
         {
 
@@ -128,10 +126,6 @@ crFILE *cr_open(char *path, char mode)
                 // save the changes in directory
                 reverse_translate_directory_block(block, raw);
 
-                raw = go_to_block(mounted_disk, 0);
-                free_directory_block(block);
-                block = get_directory_block(raw);
-
                 // Create a raw block with the extension directory
                 raw = go_to_block(mounted_disk, extension_pointer);
                 free_directory_block(block);
@@ -147,18 +141,18 @@ crFILE *cr_open(char *path, char mode)
 
                  // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
-                file_desc -> index = get_index_block(raw_index_file);
-                file_desc -> raw_index = raw_index_file;
+                file_desc->index = get_index_block(raw_index_file);
+                file_desc->raw_index = raw_index_file;
 
                 // Save the index block
-                reverse_translate_index_block(file_desc -> index , raw_index_file);
-                file_desc -> reader = 0;
-                file_desc -> reading = 0;
+                reverse_translate_index_block(file_desc->index , raw_index_file);
+                file_desc->reader = 0;
+                file_desc->reading = 0;
 
                 // This is vestige of the past modelation
                 n_directory_invalid = -1;
                 break;
-            } else if (block->directories[n_dir]->status == (unsigned char)32 && n_dir == 31)
+            } else if ((block->directories[n_dir]->status == (unsigned char)32) && (n_dir == 31))
                 {
                     if (!find_it_file_name)
                     {
@@ -192,10 +186,11 @@ crFILE *cr_open(char *path, char mode)
             unsigned int file_pointer = block->directories[n_directory_file_name]->file_pointer;
             // Go to the index block of the file and give to cr_FILE
             Block *raw_index_file = go_to_block(mounted_disk, file_pointer);
-            file_desc -> index = get_index_block(raw_index_file);
-            file_desc -> raw_index = raw_index_file;
-            file_desc -> reader = 0;
-            file_desc -> reading = 1;
+            free_index_block(file_desc->index);
+            file_desc->index = get_index_block(raw_index_file);
+            file_desc->raw_index = raw_index_file;
+            file_desc->reader = 0;
+            file_desc->reading = 1;
         }
         else
         {
@@ -231,21 +226,21 @@ crFILE *cr_open(char *path, char mode)
 
                 // Go to the index block of the file and give to cr_FILE
                 Block *raw_index_file = go_to_block(mounted_disk, new_index_block_pointer);
-                file_desc -> index = get_index_block(raw_index_file);
-                file_desc -> raw_index = raw_index_file;
+                file_desc->index = get_index_block(raw_index_file);
+                file_desc->raw_index = raw_index_file;
+                file_desc->index->size = 0;
                 // Save the index block
-                reverse_translate_index_block(file_desc -> index , raw_index_file);
-                file_desc -> reader = 0;
-                file_desc -> reading = 0;
+                reverse_translate_index_block(file_desc->index, raw_index_file);
+                file_desc->reader = 0;
+                file_desc->reading = 0;
             }
             // Extension of the directory block
-        } 
+        }
         } else
     {
         log_error("Invalid mode.");
         return NULL;
     }
-
 
     return file_desc;
 }
@@ -276,20 +271,24 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
         log_error("Invalid file pointer");
         return -1;
     }
-    file_desc->index->size = 0;
+    expand_file(mounted_disk, file_desc, nbytes);
     unsigned long counter = 0;
     unsigned char *data = buffer;
     unsigned char *location;
     while (nbytes--) {
-        if (data[file_desc->index->size] == '\0') {
-            break;
-        } else {
-            location = get_file_byte(mounted_disk, file_desc, counter);
-            *location = data[file_desc->index->size++];
-            ++counter;
-        }
+        location = get_file_byte(mounted_disk, file_desc, counter);
+        *location = data[file_desc->index->size++];
+        ++counter;
     }
+    file_desc->index->size = counter;
+    reverse_translate_index_block(file_desc->index, file_desc->raw_index);
     return counter;
+}
+
+
+void aux()
+{
+
 }
 
 
@@ -335,11 +334,11 @@ int cr_rm(char *path)
         if (subdirectory->status == (unsigned char)32) {
             raw = go_to_block(mounted_disk, subdirectory->file_pointer);
             free_directory_block(directory);
-            directory = get_directory_block(raw); 
+            directory = get_directory_block(raw);
             i = -1;
         } else if ((subdirectory->status == (unsigned char)4) && !strcmp(subdirectory->name,file))
         {
-            int bit = turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
+            turn_bitmap_bit_to_zero(mounted_disk, subdirectory->file_pointer);
             Block *index_raw = go_to_block(mounted_disk,subdirectory->file_pointer);
             IndexBlock *index = get_index_block(index_raw);
             int size = 0;
@@ -430,12 +429,6 @@ int cr_rm(char *path)
         }
     }
     return 1;
-}
-
-
-void aux()
-{
-    cr_unload("/dir", "./");
 }
 
 
