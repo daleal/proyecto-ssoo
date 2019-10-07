@@ -22,4 +22,5 @@ int cr_mkdir(char *foldername);
 /* AUXILIARY METHODS */
 int unload_file(char *destination, char *location, DirectoryEntry *file);
 int unload_folder(char *destination, char *location, DirectoryEntry *file);
+void test_get_free_block();
 void aux();

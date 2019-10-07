@@ -5,6 +5,7 @@
 typedef struct crfile {
     IndexBlock *index;
     unsigned long reader;
+    int reading ;
 } crFILE;
 
 
