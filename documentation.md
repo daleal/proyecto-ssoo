@@ -46,7 +46,7 @@ Read `file_desc` from the last read byte (`file_desc->reader`), until the next `
 
 Returns the number of bytes read. If `nbytes` plus the numbers of bytes read to the moment is less than the total size of the file, returns exactly `nbytes`. In the other case, it returns `nbytes` less the numbers of bytes unread.
 
-If the pointer to `crFILE` is `NULL`, logs a message to `stderr` and returns `-1`.
+If the pointer to `crFILE` is `NULL`, logs a message to `stderr` and returns `-1`. If `crFILE` is a writer file, logs a message to `stderr` and returns `-1`.
 
 ### Notes
 
@@ -66,7 +66,7 @@ Writes the content of `buffer` to `file_desc`, specifically the first `nbytes` o
 
 ### Return Value and Error Handling
 
-If `crFILE` is a `NULL` pointer, logs a message to `stderr` and returns `-1`. If the filesystem fails to find enough space for the whole file, `cr_write` will log a message to `stderr` and return `0`. Otherwise, `cr_write` will return the amount of bytes written to `file_desc`.
+If `crFILE` is a `NULL` pointer, logs a message to `stderr` and returns `-1`. If `crFILE` is a reader file, logs a message to `stderr` and returns `-1`. If `crFILE` has already been written, logs a message to `stderr` and returns `-1`. If the filesystem fails to find enough space for the whole file, `cr_write` will log a message to `stderr` and return `0`. Otherwise, `cr_write` will return the amount of bytes written to `file_desc`.
 
 ## cr_close
 
