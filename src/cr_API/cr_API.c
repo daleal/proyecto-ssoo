@@ -794,30 +794,6 @@ int unload_folder(char *destination, char *location, DirectoryEntry *file)
 }
 
 
-int cr_cat(char *path)
-{
-    crFILE *file = cr_open(path, 'r');
-    if (file == NULL) {
-        log_error("No such file");
-        return 0;
-    }
-    char *buffer = calloc(file->index->size + 1, sizeof(unsigned char));
-    cr_read(file, buffer, file->index->size);
-    cr_close(file);
-    printf("%s\n", buffer);
-    free(buffer);
-    return 1;
-}
-
-
-void aux()
-{
-    load_folder("/", "./", "src");
-    cr_cat("/src/cr_API/cr_API.c");
-    cr_ls("/src/cr_API");
-}
-
-
 /*
  * The method recieves a destination path
  * :destination and a DirectoryEntry struct
