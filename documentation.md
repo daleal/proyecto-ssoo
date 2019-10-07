@@ -18,7 +18,7 @@ Opens a `crFILE`. If `mode` is `'r'`, a reader `crFILE` will be returned. If `mo
 
 ### Return Value and Error Handling
 
-Upon success, the method will return a `crFILE` struct. In any other case, the method will return `NULL`. The method will fail in any of the next scenarios:
+Upon success, the method will return a `crFILE` struct. In any other case, the method will log a message to `stderr` and return `NULL`. The method will fail in any of the next scenarios:
 
 - If `path` is an invalid path to the file
 - If `mode` is `'r'` and `path` does not lead to an existing file
@@ -46,7 +46,7 @@ Read `file_desc` from the last read byte (`file_desc->reader`), until the next `
 
 Returns the number of bytes read. If `nbytes` plus the numbers of bytes read to the moment is less than the total size of the file, returns exactly `nbytes`. In the other case, it returns `nbytes` less the numbers of bytes unread.
 
-If the pointer to `crFILE` is `NULL` returns `-1`.
+If the pointer to `crFILE` is `NULL`, logs a message to `stderr` and returns `-1`.
 
 ### Notes
 
@@ -66,7 +66,7 @@ Writes the content of `buffer` to `file_desc`, specifically the first `nbytes` o
 
 ### Return Value and Error Handling
 
-If `crFILE` is a `NULL` pointer, returns `-1`. If the filesystem fails to find enough space for the whole file, `cr_write` will return `0`. Otherwise, `cr_write` will return the amount of bytes written to `file_desc`.
+If `crFILE` is a `NULL` pointer, logs a message to `stderr` and returns `-1`. If the filesystem fails to find enough space for the whole file, `cr_write` will log a message to `stderr` and return `0`. Otherwise, `cr_write` will return the amount of bytes written to `file_desc`.
 
 ## cr_close
 
@@ -82,7 +82,7 @@ Closes the file saved on `file_desc` and frees its memory.
 
 ### Return Value and Error Handling
 
-This function returns `1` if the pointer to `crFILE` is `NULL`. `0` in other case.
+This function returns `1` if the pointer to `crFILE` is `NULL`. In any other case, it logs a message to `stderr` and returns `0`.
 
 ## cr_rm
 
@@ -112,17 +112,11 @@ int cr_unload(char *orig, char *dest);
 
 ### Description
 
-Function description
+Unloads something from the virtual location `orig` to the real location `dest`. If `orig` corresponds to a file, only that file will be copied directly inside `dest`. Otherwise, `orig` corresponds to a folder. That folder will be recursively copied to `dest`.
 
 ### Return Value and Error Handling
 
-The function returns `1`.
-If `dest` belongs to a non-existent destination in the computer it returns `0`.
-If `orig` belongs to a non-existent virtual destination it returns `0`.
-
-### Notes
-
-Aditional notes about the function
+The function returns `1` if nothing goes wrong. If the real or the virtual destination and origin are wrong, this method will return `0`.
 
 ## cr_load
 
@@ -134,15 +128,11 @@ int cr_load(char *orig);
 
 ### Description
 
-Function description
+Loads something from the real location `orig` to the root of the virtual file, `/`. If `orig` corresponds to a file, only that file will be copied directly inside `/`. Otherwise, `orig` corresponds to a folder. That folder will be recursively copied to `/`.
 
 ### Return Value and Error Handling
 
-Describe return value
-
-### Notes
-
-Aditional notes about the function
+This function returns `1` when it has copied at lest 1 file inside `/`
 
 ## cr_mount
 
@@ -210,7 +200,7 @@ int cr_exists(char *path);
 
 ### Description
 
-Returns `1` if the file/directory `path` exists and `0` if it does not exist.
+Given a `path`, it returns 1 if the file/folder exists and a 0 if it does not.
 
 ### Return Value and Error Handling
 
