@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
     cr_unload("/Withered Leaf.mp3", "/NO SE QUE DESTINO PONER");
 
-    //cr_load("example.txt"); //esto deberia estar en nuestro pc o no?
+    //cr_load("pikachu2.png"); //esto deberia estar en nuestro pc o no?
 
     cr_unmount();
     return 0;
