@@ -14,7 +14,7 @@ Disk *mounted_disk = NULL;
 // File management functions
 crFILE *cr_open(char *path, char mode)
 {
-    
+
     crFILE *file_desc = malloc(sizeof(crFILE));
 
     // Variables for case of root
@@ -28,7 +28,7 @@ crFILE *cr_open(char *path, char mode)
         {
             path_has_backlas = 1;
         }
-        
+
     }
     // In case dont have one, make a concatenate in the begin
     // If have one, copy the same path
@@ -36,14 +36,14 @@ crFILE *cr_open(char *path, char mode)
     {
         path_for_split = malloc(strlen(extension)+1+strlen(path));
         strcpy(path_for_split, extension);
-        strcat(path_for_split, path);  
+        strcat(path_for_split, path);
     } else
     {
         path_for_split = malloc(1+strlen(path));
         strcpy(path_for_split, path);
     }
-    
-    
+
+
 
     char new_path[strlen(path_for_split) + 1];
 
@@ -66,7 +66,7 @@ crFILE *cr_open(char *path, char mode)
     int exist_file_name = 0;
     int find_it_file_name = 0;
 
-    // Variable for save the number of the directory 
+    // Variable for save the number of the directory
     // in the directory block of filename
     int n_directory_file_name;
 
@@ -100,7 +100,7 @@ crFILE *cr_open(char *path, char mode)
 
 
             // Conditional only for write mode
-            
+
             if ((block->directories[n_dir]->status != (unsigned char)2) &    // Directory
             (block->directories[n_dir]->status != (unsigned char)4) &    // File
             (block->directories[n_dir]->status != (unsigned char)8) &    // Same Dir
@@ -122,7 +122,7 @@ crFILE *cr_open(char *path, char mode)
                     // Start the loop after de identificator
                     n_dir = 0;
                 }
-                
+
             }
 
             // Conditional only for write mode, in case need extension
@@ -130,8 +130,8 @@ crFILE *cr_open(char *path, char mode)
             {
                 n_directory_invalid = -1;
             }
-            
-            
+
+
         }
         // Forth Check the mode
         if (mode == 'r')
@@ -183,9 +183,8 @@ crFILE *cr_open(char *path, char mode)
                 // Extension of the directory block
                 else
                 {
-                    unsigned int actual_pointer =  get_directory_pointer(mounted_disk, block);
                     // Create the extension
-                    if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+                    if (!(extension_pointer = create_directory_extension(mounted_disk))) {
                         log_error("No disk space left");
                         return NULL;
                     }
@@ -212,13 +211,13 @@ crFILE *cr_open(char *path, char mode)
                     file_desc -> reader = 0;
 
                 }
-                
+
             }
         } else
         {
             log_error("No exist that mode for this method.");
             return NULL;
-        } 
+        }
 
     }
 
@@ -502,7 +501,6 @@ int cr_mkdir(char *foldername)
     Block *raw_father;
     DirectoryBlock *father;
     unsigned int father_pointer;
-    unsigned int actual_pointer;
     unsigned int new_dir_pointer;
     DirectoryEntry *subdirectory;
     split_path(foldername, new_path, filename);
@@ -513,7 +511,6 @@ int cr_mkdir(char *foldername)
     }
     father = get_directory_block(raw_father);
     father_pointer = get_directory_pointer(mounted_disk, father);
-    actual_pointer = father_pointer;
 
     // Create new dir
     if (!(new_dir_pointer = new_directory_block(mounted_disk, father_pointer))) {
@@ -552,7 +549,7 @@ int cr_mkdir(char *foldername)
         if ((subdirectory->status != (unsigned char)32) && (i == 31)) {
             // Could not find empty entry and there are no more entries
             unsigned int extension_pointer;
-            if (!(extension_pointer = create_directory_extension(mounted_disk, actual_pointer))) {
+            if (!(extension_pointer = create_directory_extension(mounted_disk))) {
                 log_error("No disk space left");
                 if (!turn_bitmap_bit_to_zero(mounted_disk, new_dir_pointer)) {
                     log_error("Could not free unused block. Drive might be malfunctioning");
@@ -564,7 +561,6 @@ int cr_mkdir(char *foldername)
             i = -1;  // So the loop starts over with the continuation
         } else if ((subdirectory->status == (unsigned char)32) && (i != 0)) {
             // :subdirectory is the continuation of :father
-            actual_pointer = subdirectory->file_pointer;
             raw_father = go_to_block(mounted_disk, subdirectory->file_pointer);
             free_directory_block(father);
             father = get_directory_block(raw_father);  // Get continuation
@@ -651,8 +647,13 @@ int unload_file(char *destination, char *location, char *file_name)
  */
 int unload_folder(char *destination, char *location, char *file_name)
 {
-    char full_path[strlen(destination) + 27 + 2];
-    sprintf(full_path, "%s/%s", destination, file_name);
+    char path_start[strlen(destination) + 10];
+    strcpy(path_start, destination);
+    if (!strcmp(destination, "")) {
+        strcpy(path_start, ".");
+    }
+    char full_path[strlen(path_start) + 27 + 2];
+    sprintf(full_path, "%s/%s", path_start, file_name);
 
     char virtual_path[strlen(location) + 27 + 2];
     sprintf(virtual_path, "%s/%s", location, file_name);
