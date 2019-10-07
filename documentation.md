@@ -104,7 +104,6 @@ Remove the file in `path` from the file sistem, freeing all the memory used by i
 Returns `1` if succeeded, `0` otherwise.
 In case that `mounted_disk` is set to `NULL`, it logs a message to `stderr`.
 In case that `path` does not exist, it logs a message to `stderr`.
-In case that the path to the file does exist, but the file does not exist, it logs a message to `stderr`.
 
 ## cr_unload
 
