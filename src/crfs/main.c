@@ -7,23 +7,13 @@
 int main(int argc, char **argv)
 {
     cr_mount(argv[1]);
-    crFILE *file = cr_open("new.txt", 'w');
-    char buffer[3000];
-    strcpy(buffer, "holaa!!");
-    cr_write(file, buffer, strlen(buffer));
-    cr_close(file);
-
     cr_ls("/");
-
-    file = cr_open("new.txt", 'r');
-    char new_buffer[3000];
-    cr_read(file, new_buffer, strlen(buffer));
-    FILE *write = fopen("nuevo.txt", "wb");
-    fwrite(new_buffer, sizeof(unsigned char), strlen(buffer), write);
-    fclose(write);
-    cr_close(file);
-
-    // aux();
+    aux();
+    cr_ls("/");
+    crFILE *git = cr_open("/documentation.md", 'r');
+    char buffer[git->index->size + 1];
+    cr_read(git, buffer, git->index->size);
+    printf("%s\n", buffer);
     // cr_bitmap(1, false);
     cr_unmount();
     return 0;

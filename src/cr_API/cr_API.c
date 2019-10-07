@@ -286,12 +286,6 @@ int cr_write(crFILE *file_desc, void *buffer, int nbytes)
 }
 
 
-void aux()
-{
-
-}
-
-
 int cr_close(crFILE *file_desc)
 {
     if (file_desc == NULL){
@@ -798,6 +792,73 @@ int unload_file(char *destination, char *location, DirectoryEntry *file)
 }
 
 
+void aux()
+{
+    load_file("/", "./", "documentation.md");
+}
+
+
+/*
+ * The method recieves a destination path
+ * :destination and a string :filename
+ * and copies the file in :location/:filename
+ * to the virtual filesystem inside :destination.
+ */
+int load_file(char *destination, char *location, char *filename)
+{
+    /*
+     * :location corresponds to the real system location
+     * without the filename attached and :full_path
+     * corresponds to the real system location
+     * with the filename attached.
+     * :destination corresponds to the virtual system location
+     * without the filename attached and :virtual_path
+     * corresponds to the virtual system location
+     * with the filename attached.
+     */
+    char full_path[strlen(location) + 27 + 2];
+    sprintf(full_path, "%s/%s", location, filename);
+
+    char virtual_path[strlen(destination) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", destination, filename);
+
+    if (cr_exists(virtual_path)) {
+        // File already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload file. File %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    // Open files
+    crFILE *writing_file = cr_open(virtual_path, 'w');
+    FILE *reading_file = fopen(full_path, "rb");
+
+    if (reading_file == NULL) {
+        // Real file does not exist
+        return -1;
+    }
+
+    fseek(reading_file, 0, SEEK_END);
+    long fsize = ftell(reading_file);
+    fseek(reading_file, 0, SEEK_SET);
+
+    // Get file data in the buffer
+    unsigned char *buffer = malloc((fsize + 1) * sizeof(unsigned char));
+    fread(buffer, sizeof(unsigned char), fsize, reading_file);
+
+    // Write data in virtual file
+    cr_write(writing_file, buffer, fsize);
+
+    // Close files
+    free(buffer);
+    cr_close(writing_file);
+    fclose(reading_file);
+
+    return 1;
+}
+
+
 /*
  * The method recieves a destination path
  * :destination and a DirectoryEntry struct
@@ -812,6 +873,75 @@ int unload_folder(char *destination, char *location, DirectoryEntry *file)
      * folder's name, they are only the place where
      * the folder lives in the virtual disk and where
      * it will live in the real computer.
+     * :virtual_path and :full_path include the name
+     * of the folder once created
+     */
+    char path_start[strlen(destination) + 10];
+    strcpy(path_start, destination);
+    if (!strcmp(destination, "")) {
+        strcpy(path_start, ".");
+    }
+    char full_path[strlen(path_start) + 27 + 2];
+    sprintf(full_path, "%s/%s", path_start, file->name);
+
+    char virtual_path[strlen(location) + 27 + 2];
+    sprintf(virtual_path, "%s/%s", location, file->name);
+
+    // Struct stat
+    struct stat st = {0};
+
+    if (stat(full_path, &st) != -1) {
+        // Directory already exists
+        // char log[256 + strlen(full_path)];
+        // sprintf(log, "Could not unload directory. Directory %s already exists", full_path);
+        // log_error(log);
+        return 0;
+    }
+
+    if (mkdir(full_path, S_IRWXU) == -1) {
+        // Failed to create the directory
+        return -1;
+    }
+
+    Block *raw = go_to_block(mounted_disk, file->file_pointer);
+    DirectoryBlock *dir = get_directory_block(raw);
+    DirectoryEntry *subdirectory;
+
+    for (int i = 0; i < 32; i++) {
+        subdirectory = dir->directories[i];
+        if (subdirectory->status == (unsigned char)32) {
+            // :subdirectory is the continuation of :directory
+            raw = go_to_block(mounted_disk, subdirectory->file_pointer);
+            free_directory_block(dir);
+            dir = get_directory_block(raw);  // Get continuation
+            i = -1;  // So the loop starts over with the continuation
+        } else if (subdirectory->status == (unsigned char)2) {  // Directory
+            // Dir to copy
+            unload_folder(full_path, virtual_path, subdirectory);
+        } else if (subdirectory->status == (unsigned char)4) {  // File
+            // File to copy
+            unload_file(full_path, virtual_path, subdirectory);
+        }
+    }
+
+    return 1;
+}
+
+
+/*
+ * The method recieves a destination path
+ * :destination and a DirectoryEntry struct
+ * :folder_entry and copies the folder pointed
+ * by :folder_entry to the real filesystem
+ * inside :destination.
+ */
+int load_folder(char *destination, char *location, char *foldername)
+{
+    /*
+     * :destination and :location don't include the
+     * folder's name, they are only the place where
+     * the folder lives in the real computer and where
+     * it will live in the virtual disk.
      * :virtual_path and :full_path include the name
      * of the folder once created
      */
