@@ -346,8 +346,6 @@ int cr_unload(char *orig, char *dest)
         return 0;
     }
 
-    // recursive_unload(orig, dest);
-
     return 1;
 }
 
@@ -724,38 +722,4 @@ int unload_folder(char *destination, char *location, DirectoryEntry *file)
     }
 
     return 1;
-}
-
-
-void recursive_unload(char *orig, char *dest)
-{
-    char orig_path[strlen(orig) + 1];
-    char filename[strlen(orig) + 1];
-    Block *actual_raw_folder;
-    DirectoryBlock *actual_folder;
-    DirectoryEntry *subdirectory;
-    split_path(orig, orig_path, filename);
-    actual_raw_folder = cr_folder_cd(mounted_disk, orig_path);
-    actual_folder = get_directory_block(actual_raw_folder);
-    for (int i = 0; i < 32; i++) {
-        subdirectory = actual_folder->directories[i];
-        if (subdirectory->status == (unsigned char)32) {
-            // :subdirectory is the continuation of :directory
-            actual_raw_folder = go_to_block(mounted_disk, subdirectory->file_pointer);
-            free_directory_block(actual_folder);
-            actual_folder = get_directory_block(actual_raw_folder);  // Get continuation
-            i = -1;  // So the loop starts over with the continuation
-        } else if (
-            (subdirectory->status == (unsigned char)2) &&
-            (!strcmp(subdirectory->name, filename))) {  // Directory
-            // Dir to copy
-            unload_folder(dest, orig_path, subdirectory);
-        } else if (
-            (subdirectory->status == (unsigned char)4) &&
-            (!strcmp(subdirectory->name, filename))) {  // File
-            // File to copy
-            unload_file(dest, orig_path, subdirectory);
-        }
-    }
-    free_directory_block(actual_folder);
 }
