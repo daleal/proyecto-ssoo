@@ -242,6 +242,12 @@ int expand_file(crFILE *file, unsigned long size)
 }
 
 
+/*
+ * This method recieves an unsigned long integer
+ * :size and returns the amount of blocks (not
+ * counting the index block) that a file of that
+ * size should occupy.
+ */
 unsigned long new_file_block_amount(unsigned long size)
 {
     unsigned long blocks = 0;
@@ -256,19 +262,41 @@ unsigned long new_file_block_amount(unsigned long size)
     blocks += 1;  // Simple Directioning Block
     if (size < SIMPLE_DIRECT_BYTES_LIMIT) {
         size -= DATA_BYTES_LIMIT;
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
     } else {
         // Fill simple directioning block
         blocks += 256;
     }
     blocks += 1;  // Double Directioning Block
     if (size < DOUBLE_DIRECT_BYTES_LIMIT) {
-
+        size -= SIMPLE_DIRECT_BYTES_LIMIT;
+        blocks += size / (BLOCK_SIZE * 256);
+        blocks += ((size % (BLOCK_SIZE * 256)) != 0);
+        // Offset to the simple directioning block
+        size -= BLOCK_SIZE * 256 * (size / (BLOCK_SIZE * 256));
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
     } else {
         // Fill double directioning block
         blocks += (256 + 256 * 256);
     }
     blocks += 1;  // Triple Directioning Block
     if (size < TRIPLE_DIRECT_BYTES_LIMIT) {
-
+        size -= DOUBLE_DIRECT_BYTES_LIMIT;
+        blocks += size / (BLOCK_SIZE * 256 * 256);
+        blocks += ((size % (BLOCK_SIZE * 256 * 256)) != 0);
+        // Offset to the double directioning block
+        size -= BLOCK_SIZE * 256 * 256 * (size / (BLOCK_SIZE * 256 * 256));
+        blocks += size / (BLOCK_SIZE * 256);
+        blocks += ((size % (BLOCK_SIZE * 256)) != 0);
+        // Offset to the simple directioning block
+        size -= BLOCK_SIZE * 256 * (size / (BLOCK_SIZE * 256));
+        blocks += size / BLOCK_SIZE;
+        blocks += ((size % BLOCK_SIZE) != 0);
+        return blocks;
     }
+    return blocks + 256 + 256 * 256 + 256 * 256 * 256;  // Never happening
 }
