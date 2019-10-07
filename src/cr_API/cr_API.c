@@ -889,3 +889,9 @@ int load_folder(char *destination, char *location, char *foldername)
 
     return 1;
 }
+
+
+Disk *get_disk()
+{
+    return mounted_disk;
+}
