@@ -57,7 +57,7 @@ int close_disk(Disk *disk)
     if (disk == NULL) {
         return 0;
     }
-    save_disk(disk);
+    // save_disk(disk);
     free_disk(disk);
     return 1;
 }

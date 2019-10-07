@@ -2,8 +2,6 @@
 #include "../internal_cr_API/internal_cr_API.h"
 
 
-// File structs
-
 // File management functions
 crFILE *cr_open(char *path, char mode);
 int cr_read(crFILE *file_desc, void *buffer, int nbytes);
@@ -22,6 +20,7 @@ void cr_ls(char *path);
 int cr_mkdir(char *foldername);
 
 /* AUXILIARY METHODS */
-int unload_file(char *destination, char *location, char *file_name);
-int unload_folder(char *destination, char *location, char *folder_name);
+int unload_file(char *destination, char *location, DirectoryEntry *file);
+int unload_folder(char *destination, char *location, DirectoryEntry *file);
 void recursive_unload(char *orig, char *dest);
+void aux();
