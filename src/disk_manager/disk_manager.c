@@ -718,13 +718,10 @@ unsigned int new_index_block(Disk *disk)
     Block *raw_dir;
     IndexBlock *new_dir = malloc(sizeof(IndexBlock));
 
-    new_dir -> size = 0;
-    for (int i = 0; i < 252; i++)
-    {
-        new_dir -> data_blocks[i] = 0;
+    new_dir->size = 0;
+    for (int i = 0; i < 252; i++) {
+        new_dir->data_blocks[i] = 0;
     }
-
-
 
     // Translate dir block to raw block
     raw_dir = go_to_block(disk, new_dir_pointer);

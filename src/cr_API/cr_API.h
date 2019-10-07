@@ -23,4 +23,5 @@ int cr_mkdir(char *foldername);
 int unload_file(char *destination, char *location, DirectoryEntry *file);
 int load_file(char *destination, char *location, char *filename);
 int unload_folder(char *destination, char *location, DirectoryEntry *file);
+int load_folder(char *destination, char *location, char *foldername);
 void aux();
