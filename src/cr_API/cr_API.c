@@ -285,7 +285,7 @@ int cr_rm(char *path)
 
 void aux()
 {
-    cr_unload("/memes", "./");
+    cr_unload("/dir", "./");
 }
 
 
@@ -636,7 +636,6 @@ int unload_file(char *destination, char *location, DirectoryEntry *file)
 
     if (reading_file == NULL) {
         // Virtual file does not exist
-        printf("INVALID: %s\n", virtual_path);
         return -1;
     }
 

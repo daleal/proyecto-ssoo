@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     // cr_bitmap(1, false);
     // crFILE *file = cr_open("nuevo_archivo", 'w');
     // cr_close(file);
-    cr_ls("/memes");
+    cr_ls("/dir");
     aux();
     cr_unmount();
     return 0;
