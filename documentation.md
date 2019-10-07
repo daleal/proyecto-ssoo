@@ -8,7 +8,6 @@ This document contains every detail about the functionality, implementation and 
 
 ```c
 #include "cr_API.h"
-
 crFILE *cr_open(char *path, char mode);
 ```
 
@@ -34,7 +33,6 @@ A reader `crFILE` has a pointer to the last byte read from it. Once its pointer 
 
 ```c
 #include "cr_API.h"
-
 int cr_read(crFILE *file_desc, void *buffer, int nbytes);
 ```
 
@@ -56,7 +54,6 @@ Notice that when the `reader` of the `crFILE` reaches the end of the file, the a
 
 ```c
 #include "cr_API.h"
-
 int cr_write(crFILE *file_desc, void *buffer, int nbytes);
 ```
 
@@ -72,7 +69,6 @@ If `crFILE` is a `NULL` pointer, logs a message to `stderr` and returns `-1`. If
 
 ```c
 #include "cr_API.h"
-
 int cr_close(crFILE *file_desc);
 ```
 
@@ -88,7 +84,6 @@ This function returns `1` if the pointer to `crFILE` is `NULL`. In any other cas
 
 ```c
 #include "cr_API.h"
-
 int cr_rm(char *path);
 ```
 
@@ -106,7 +101,6 @@ In case that `path` does not exist, it logs a message to `stderr`.
 
 ```c
 #include "cr_API.h"
-
 int cr_unload(char *orig, char *dest);
 ```
 
@@ -122,7 +116,6 @@ The function returns `1` if nothing goes wrong. If the real or the virtual desti
 
 ```c
 #include "cr_API.h"
-
 int cr_load(char *orig);
 ```
 
@@ -138,7 +131,6 @@ This function returns `1` when it has copied at lest 1 file inside `/`
 
 ```c
 #include "cr_API.h"
-
 void cr_mount(char *diskname);
 ```
 
@@ -154,7 +146,6 @@ The function returns void. In case that `diskname` does not exist, it logs a mes
 
 ```c
 #include "cr_API.h"
-
 void cr_unmount();
 ```
 
@@ -170,7 +161,6 @@ The function returns void. In case that `mounted_disk` is set to `NULL`, it logs
 
 ```c
 #include "cr_API.h"
-
 void cr_bitmap(unsigned block, bool hex);
 ```
 
@@ -194,7 +184,6 @@ As the bitmap contains 131072 bytes of information, calling the function with `b
 
 ```c
 #include "cr_API.h"
-
 int cr_exists(char *path);
 ```
 
@@ -210,7 +199,6 @@ The function returns `1` or `0`. If no disk is mounted, it logs a message to `st
 
 ```c
 #include "cr_API.h"
-
 void cr_ls(char *path);
 ```
 
@@ -226,7 +214,6 @@ The function returns void. In case that `path` does not exist, it logs a message
 
 ```c
 #include "cr_API.h"
-
 int cr_mkdir(char *foldername);
 ```
 

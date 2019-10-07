@@ -8,7 +8,6 @@ This document contains every detail about the functionality, implementation and 
 
 ```c
 #include "extern_methods.h"
-
 int cr_cat(char *path);
 ```
 
@@ -24,7 +23,6 @@ If path is not an existing file, it logs a message to `stderr` and returns `0`. 
 
 ```c
 #include "extern_methods.h"
-
 void snap();
 ```
 
