@@ -25,3 +25,4 @@ int cr_mkdir(char *foldername);
 int unload_file(char *destination, char *location, char *file_name);
 int unload_folder(char *destination, char *location, char *folder_name);
 void recursive_unload(char *orig, char *dest);
+void test_get_free_block();
