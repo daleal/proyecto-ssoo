@@ -44,13 +44,3 @@ int main(int argc, char **argv)
 }
 
 
- disco se llenó o porque el archivo no puede crecer más, este número puede ser
-menor a nbytes (incluso 0).
-int cr_close(crFILE* file_desc). Función para cerrar archivos. Cierra el archivo indicado por
-file desc. Debe garantizar que cuando esta función retorna, el archivo se encuentra actualizado en disco.
-int cr_rm(char* path). Función para borrar archivos. Elimina el archivo referenciado por la ruta path
-del directorio correspondiente. Los bloques que estaban siendo usados por el archivo deben quedar libres.
-int cr_unload(char* orig, char* dest). Función que se encarga de copiar un archivo o un árbol
-de directorios (es decir, un directorio y todos sus contenidos) del disco, referenciado por orig, hacia un nuevo
-archivo o directorio de ruta dest en su computador.
-int cr_load(char* orig). F
