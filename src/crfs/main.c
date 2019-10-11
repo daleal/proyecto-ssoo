@@ -19,11 +19,11 @@
 #define CODE_FILE_NAME "/src/crfs/main.c"
 
 
-void separator()
+void separator(char *text)
 {
+    fprintf(stderr, "\n=================================================================\n");
+    fprintf(stderr, text);
     fprintf(stderr, "\n=================================================================\n\n");
-    // fprintf(stderr, data);
-    // fprintf(stderr, "\n=================================================================\n\n");
 }
 
 
@@ -56,12 +56,12 @@ int main(int argc, char **argv)
     unsigned int write_size;
     int status;
 
-    separator();  // ==========================================================
+    separator("TRY TO UNMOUNT DISK");  // =====================================
 
     // Try to unmount disk with no mounted disk
     cr_unmount();
 
-    separator();  // ==========================================================
+    separator("MOUNT DISK AND TRY TO MOUNT IT AGAIN");  // ====================
 
     // Mount the disk
     cr_mount(argv[1]);
@@ -69,17 +69,17 @@ int main(int argc, char **argv)
     // Try to mount another disk (error, a disk is already mounted)
     cr_mount(argv[1]);
 
-    separator();  // ==========================================================
+    separator("GET FIRST BITMAP BLOCK AS BITS");  // ==========================
 
     // Get the first bitmap block as bits
     cr_bitmap(1, false);
 
-    separator();  // ==========================================================
+    separator("PRINT ROOT FILE STRUCTURE");  // ===============================
 
     // See root file structure
     cr_ls("/");
 
-    separator();  // ==========================================================
+    separator("OPEN AND CLOSE A NON EXSISTENT FILE");  // =====================
 
     // Open a non existent file
     cr_file = cr_open("/memes/file.txt", 'r');
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     status = cr_close(cr_file);
     printf("cr_close status: %i\n", status);
 
-    separator();  // ==========================================================
+    separator("OPEN, READ AND CLOSE EXISTENT FILE");  // ======================
 
     // Read an existent file
     cr_file = cr_open("/intro.txt", 'r');
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
     status = cr_close(cr_file);
     printf("cr_close status: %i\n", status);
 
-    separator();  // ==========================================================
+    separator("TRY TO OPEN AND CLOSE EXISTING FILE IN WRITE MODE");  // =======
 
     // Open an existing file in write mode
     cr_file = cr_open("/intro.txt", 'w');
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     status = cr_close(cr_file);
     printf("cr_close status: %i\n", status);
 
-    separator();  // ==========================================================
+    separator("CREATE FOLDER AND PRINT ROOT FILE STRUCTURE");  // =============
 
     // Create a new folder
     status = cr_mkdir("/ultra_important_stuff");
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     // Check that dir appears listed in root
     cr_ls("/");
 
-    separator();  // ==========================================================
+    separator("WRITE IN NEW FILE AND CHECK THAT IT EXISTS");  // ==============
 
     // Open a new file in write mode
     cr_file = cr_open("/ultra_important_stuff/intro_copy.txt", 'w');
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
     // Check that file appears listed inside folder
     cr_ls("/ultra_important_stuff");
 
-    separator();  // ==========================================================
+    separator("READ HALF OF A FILE");  // =====================================
 
     // Open the file written a few lines ago
     cr_file = cr_open("/ultra_important_stuff/intro_copy.txt", 'r');
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     printf("Data read:\n\t==== READ ====\n%s\n\t==== READ ====\n", buffer);
     free(buffer);
 
-    separator();  // ==========================================================
+    separator("READ THE OTHER HALF OF THAT FILE AND CLOSE IT");  // ===========
 
     // Set an arbitrarily big buffer
     buffer_size = ARBITRARY_SIZE;
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
     status = cr_close(cr_file);
     printf("\ncr_close status: %i\n", status);
 
-    separator();  // ==========================================================
+    separator("DELETE FILE AND CHECK THAT IT DOES NOT EXIST ANYMORE");  // ====
 
     // Delete file just created
     status = cr_rm("/ultra_important_stuff/intro_copy.txt");
@@ -189,11 +189,11 @@ int main(int argc, char **argv)
     // Check that file no longer appears listed inside folder
     cr_ls("/ultra_important_stuff");
 
-    separator();  // ==========================================================
+    separator("LOAD IMAGE, CHECK THAT IT GETS SAVED AND GET SIZE");  // =======
 
     // Load image to system
     status = cr_load(REAL_IMAGE_NAME);
-    printf("File correctly loaded: %i\n", status);
+    printf("File correctly loaded: %i\n\n", status);
 
     // Check that file appears listed inside folder
     cr_ls("/");
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
     printf("\nFile size: %i bytes\n", cr_file->index->size);
     cr_close(cr_file);
 
-    separator();  // ==========================================================
+    separator("UNLOAD TO INVALID FOLDER, THEN UNLOAD TO VALID ONE");  // ======
 
     // Unload folder to invalid external folder
     status = cr_unload(VIRTUAL_FOLDER_NAME, INVALID_REAL_FOLDER_NAME);
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
     status = cr_unload(VIRTUAL_FOLDER_NAME, VALID_REAL_FOLDER_NAME);
     printf("\nUnload status: %i\n", status);
 
-    separator();  // ==========================================================
+    separator("LOAD CODE FOLDER AND CHECK THAT IT LOADS");  // ================
 
     // Load source code folder
     status = cr_load(CODE_FOLDER_NAME);
@@ -222,14 +222,16 @@ int main(int argc, char **argv)
     // See root file structure again
     cr_ls("/");
 
-    separator();  // ==========================================================
+    separator("'CAT' THIS CODE FILE");  // ====================================
 
     cr_cat(CODE_FILE_NAME);
 
-    separator();  // ==========================================================
+    separator("UNMOUNT DISK");  // ============================================
 
     // Unmount disk
     cr_unmount();
+
+    separator("END");  // =====================================================
 
     return 0;
 }
