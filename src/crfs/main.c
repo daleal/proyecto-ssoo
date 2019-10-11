@@ -15,6 +15,9 @@
 #define INVALID_REAL_FOLDER_NAME "./no_existo"
 #define VALID_REAL_FOLDER_NAME "./"
 
+#define CODE_FOLDER_NAME "./src"
+#define CODE_FILE_NAME "/src/crfs/main.c"
+
 
 void separator()
 {
@@ -37,6 +40,11 @@ void separator()
  * the virtual disk.
  * Make sure that VALID_REAL_FOLDER_NAME exists in the repo
  * and that the variable starts with a leading "./".
+ * Make sure that CODE_FOLDER_NAME is a dir in the repo,
+ * that it starts with a leading "./" and that contains at
+ * least one text file inside it. Then, make sure that
+ * CODE_FILE_NAME is the path (starting from CODE_FOLDER_NAME)
+ * to a text file and that it starts with a leading "/".
  */
 int main(int argc, char **argv)
 {
@@ -204,6 +212,19 @@ int main(int argc, char **argv)
     // Unload folder to valid external folder
     status = cr_unload(VIRTUAL_FOLDER_NAME, VALID_REAL_FOLDER_NAME);
     printf("\nUnload status: %i\n", status);
+
+    separator();  // ==========================================================
+
+    // Load source code folder
+    status = cr_load(CODE_FOLDER_NAME);
+    printf("Folder correctly loaded: %i\n\n", status);
+
+    // See root file structure again
+    cr_ls("/");
+
+    separator();  // ==========================================================
+
+    cr_cat(CODE_FILE_NAME);
 
     separator();  // ==========================================================
 
