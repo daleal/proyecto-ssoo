@@ -8,6 +8,13 @@
 
 #define ARBITRARY_SIZE 512
 
+#define REAL_IMAGE_NAME "./pikachu.png"
+#define VIRTUAL_IMAGE_NAME "/pikachu.png"
+
+#define VIRTUAL_FOLDER_NAME "/memes"
+#define INVALID_REAL_FOLDER_NAME "./no_existo"
+#define VALID_REAL_FOLDER_NAME "./"
+
 
 void separator()
 {
@@ -17,6 +24,20 @@ void separator()
 }
 
 
+/*
+ * INSTRUCTIONS:
+ * Put an image in the root directory of this repo and
+ * change the variables REAL_IMAGE_NAME and VIRTUAL_IMAGE_NAME
+ * to the name of the image (REAL_IMAGE_NAME with a leading "./"
+ * and VIRTUAL_IMAGE_NAME with a leading "/").
+ * Make sure there are no dirs in the root directory with the
+ * name INVALID_REAL_FOLDER_NAME or change that value not to
+ * match any existing folder (always with a leading "./").
+ * Make sure that VIRTUAL_FOLDER_NAME is a valid folder inside
+ * the virtual disk.
+ * Make sure that VALID_REAL_FOLDER_NAME exists in the repo
+ * and that the variable starts with a leading "./".
+ */
 int main(int argc, char **argv)
 {
     // Used variable declarations
@@ -26,6 +47,11 @@ int main(int argc, char **argv)
     unsigned int read_size;
     unsigned int write_size;
     int status;
+
+    separator();  // ==========================================================
+
+    // Try to unmount disk with no mounted disk
+    cr_unmount();
 
     separator();  // ==========================================================
 
@@ -88,7 +114,7 @@ int main(int argc, char **argv)
     status = cr_mkdir("/ultra_important_stuff");
     printf("Directory successfully created: %i\n\n", status);
 
-    // Check if dir appears listed in root
+    // Check that dir appears listed in root
     cr_ls("/");
 
     separator();  // ==========================================================
@@ -109,7 +135,7 @@ int main(int argc, char **argv)
     status = cr_exists("/ultra_important_stuff/intro_copy.txt");
     printf("\nFile created correctly: %i\n\n", status);
 
-    // Check if file appears listed inside folder
+    // Check that file appears listed inside folder
     cr_ls("/ultra_important_stuff");
 
     separator();  // ==========================================================
@@ -120,7 +146,7 @@ int main(int argc, char **argv)
 
     // Set buffer size as half of the file size
     buffer_size = cr_file->index->size / 4;
-    buffer = calloc(buffer_size, sizeof(unsigned char));
+    buffer = calloc(buffer_size + 1, sizeof(unsigned char));
 
     // Read file bytes to buffer and get the read size
     read_size = cr_read(cr_file, buffer, buffer_size);
@@ -133,7 +159,7 @@ int main(int argc, char **argv)
 
     // Set an arbitrarily big buffer
     buffer_size = ARBITRARY_SIZE;
-    buffer = calloc(buffer_size, sizeof(unsigned char));
+    buffer = calloc(buffer_size + 1, sizeof(unsigned char));
 
     // Read file bytes to buffer and get the read size
     read_size = cr_read(cr_file, buffer, buffer_size);
@@ -148,15 +174,41 @@ int main(int argc, char **argv)
 
     separator();  // ==========================================================
 
+    // Delete file just created
+    status = cr_rm("/ultra_important_stuff/intro_copy.txt");
+    printf("File correctly removed: %i\n\n", status);
 
-    // cr_rm("/memes/intro_copy.txt");
+    // Check that file no longer appears listed inside folder
+    cr_ls("/ultra_important_stuff");
 
-    // // cr_unload("/Withered Leaf.mp3", "./generated");
+    separator();  // ==========================================================
 
-    // cr_load("./pikachu2.png");
+    // Load image to system
+    status = cr_load(REAL_IMAGE_NAME);
+    printf("File correctly loaded: %i\n", status);
 
-    // cr_ls("/");
+    // Check that file appears listed inside folder
+    cr_ls("/");
 
+    // Get image size
+    cr_file = cr_open(VIRTUAL_IMAGE_NAME, 'r');
+    printf("\nFile size: %i bytes\n", cr_file->index->size);
+    cr_close(cr_file);
+
+    separator();  // ==========================================================
+
+    // Unload folder to invalid external folder
+    status = cr_unload(VIRTUAL_FOLDER_NAME, INVALID_REAL_FOLDER_NAME);
+    printf("Unload status: %i\n", status);
+
+    // Unload folder to valid external folder
+    status = cr_unload(VIRTUAL_FOLDER_NAME, VALID_REAL_FOLDER_NAME);
+    printf("\nUnload status: %i\n", status);
+
+    separator();  // ==========================================================
+
+    // Unmount disk
     cr_unmount();
+
     return 0;
 }
