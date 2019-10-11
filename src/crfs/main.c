@@ -56,11 +56,6 @@ int main(int argc, char **argv)
     unsigned int write_size;
     int status;
 
-    separator("TRY TO UNMOUNT DISK");  // =====================================
-
-    // Try to unmount disk with no mounted disk
-    cr_unmount();
-
     separator("MOUNT DISK AND TRY TO MOUNT IT AGAIN");  // ====================
 
     // Mount the disk
@@ -225,11 +220,6 @@ int main(int argc, char **argv)
     separator("'CAT' THIS CODE FILE");  // ====================================
 
     cr_cat(CODE_FILE_NAME);
-
-    separator("UNMOUNT DISK");  // ============================================
-
-    // Unmount disk
-    cr_unmount();
 
     separator("END");  // =====================================================
 
